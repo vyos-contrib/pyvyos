@@ -1,17 +1,43 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vyapi"
+version = "0.1.1"
+authors = [
+    { name="Roberto Berto", email="roberto.berto@gmail.com" },
+]
+description = "Python SDK for interacting with VyOS API"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/gravscale/vyapi"
+Issues = "https://github.com/gravscale/vyapi/issues"
+
+[tool.hatch.metadata]
+dependencies = [
+    "requests>=2.25.1,<3.0",
+    "python-dotenv>=1.0.0,<2.0"
+]
+dev-dependencies = [
+    "pytest>=6.2.2,<7.0"
+]
 
 [tool.poetry]
 name = "vyapi"
-version = "0.1.1"
 description = "Python SDK for interacting with VyOS API"
 authors = ["Roberto Berto <roberto.berto@gmail.com>"]
+version = "0.1.1"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
-requests = "^2.25.1"
+python = ">=3.8"
+requests = "^2.31.0"
 python-dotenv = "^1.0.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.2"
