@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "vyapi"
+version = "0.1.0"
+description = "Python SDK for interacting with VyOS API"
+authors = ["Roberto Berto <roberto.berto@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+requests = "^2.25.1"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
