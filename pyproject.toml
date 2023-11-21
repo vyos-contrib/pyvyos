@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "vyapi"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python SDK for interacting with VyOS API"
 authors = ["Roberto Berto <roberto.berto@gmail.com>"]
 

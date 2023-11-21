@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vyapi',
-    version='0.1.0',
+    version='0.1.1',
     description='Python SDK for interacting with VyOS API',
     author='Roberto Berto',
     author_email='roberto.berto@gmail.com',

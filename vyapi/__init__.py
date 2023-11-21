@@ -1,1 +1,2 @@
-from .vy_device import VyDevice
+from .device import VyDevice
+from .device import ApiResponse
