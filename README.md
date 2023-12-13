@@ -125,7 +125,7 @@ The configure_set method sets a VyOS configuration:
 
 ```
 # Set a VyOS configuration
-response = device.configure_set(path=["interfaces ethernet eth0 address '192.168.1.1/24'"])
+response = device.configure_set(path=["interfaces", "ethernet", "eth0", "address", "192.168.1.1/24"])
 
 # Check for errors and print the result
 if not response.error:
