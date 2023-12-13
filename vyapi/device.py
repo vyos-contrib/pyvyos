@@ -14,9 +14,9 @@ class ApiResponse:
     error: str
     
 class VyDevice:
-    def __init__(self, hostname, key, protocol='https', port=443, verify=True, timeout=10):
+    def __init__(self, hostname, apikey, protocol='https', port=443, verify=True, timeout=10):
         self.hostname = hostname
-        self.key = key
+        self.apikey = apikey
         self.protocol = protocol
         self.port = port
         self.verify = verify
@@ -26,16 +26,25 @@ class VyDevice:
     def _get_url(self, command):
         return f"{self.protocol}://{self.hostname}:{self.port}/{command}"
 
-    def _get_payload(self, op, path):
-        return {
-            'data': json.dumps({'op': op, 'path': path}),
-            'key': self.key
-        }
+    def _get_payload(self, op, path, file=None):
+        if file is not None:
+            return {
+                'data': json.dumps({
+                    'op': op, 
+                    'file': file,
+                }),
+                'key': self.apikey
+            }
+        else:           
+            return {
+                'data': json.dumps({'op': op, 'path': path}),
+                'key': self.apikey
+            }
 
-    def _api_request(self, command, op, path=[], method='POST'):
+    def _api_request(self, command, op, path=[], method='POST', file=None):
         url = self._get_url(command)
-        payload = self._get_payload(op, path)
-
+        payload = self._get_payload(op, path, file)
+        pprint.pprint(payload)
         
         headers = {}
         error = False      
@@ -43,10 +52,11 @@ class VyDevice:
 
         try:
             resp = requests.post(url, verify=self.verify, data=payload, timeout=self.timeout, headers=headers)
-        
+            pprint.pprint(resp.text)
             if resp.status_code == 200:
                 try:
                     resp_decoded = resp.json()
+                    
                     if resp_decoded['success'] == True:
                         result = resp_decoded['data']
                         error = False
@@ -68,7 +78,7 @@ class VyDevice:
 
 
     def retrieve_show_config(self, path=[]):
-        return self._api_request(command="retrieve", op='showConfig', path=[], method="POST")
+        return self._api_request(command="retrieve", op='showConfig', path=path, method="POST")
 
     def retrieve_return_values(self, path=[]):
         pass
@@ -88,16 +98,17 @@ class VyDevice:
     def generate(self, path=[]):
         pass
 
-    def configure_sef(self, path=[]):
-        pass
+    def configure_set(self, path=[]):
+        return self._api_request(command="configure", op='set', path=path, method="POST")
 
     def configure_delete(self, path=[]):
-        pass
+        return self._api_request(command="configure", op='delete', path=path, method="POST")
 
     def config_file_save(self, file=None):
-        pass
+        return self._api_request(command="config-file", op='save', file=file, method="POST")
 
     def config_file_load(self, file=None):
-        pass
+        return self._api_request(command="config-file", op='load', file=file, method="POST")
+
 
     
