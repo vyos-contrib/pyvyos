@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "vyapi"
-version = "0.1.1"
+name = "pyvyos"
+version = "0.2.0"
 authors = [
     { name="Roberto Berto", email="roberto.berto@gmail.com" },
 ]
@@ -18,8 +18,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gravscale/vyapi"
-Issues = "https://github.com/gravscale/vyapi/issues"
+Homepage = "https://github.com/gravscale/pyvyos"
+Issues = "https://github.com/gravscale/pyvyos/issues"
 
 [tool.hatch.metadata]
 dependencies = [
@@ -31,10 +31,10 @@ dev-dependencies = [
 ]
 
 [tool.poetry]
-name = "vyapi"
+name = "pyvyos"
 description = "Python SDK for interacting with VyOS API"
 authors = ["Roberto Berto <roberto.berto@gmail.com>"]
-version = "0.1.1"
+version = "0.2.0"
 
 [tool.poetry.dependencies]
 python = ">=3.8"
