@@ -2,12 +2,13 @@
 
 PyVyOS is a Python library for interacting with VyOS devices via their API. This documentation provides a guide on how to use PyVyOS to manage your VyOS devices programmatically.
 
+You can find the complete PyVyOS documentation on [Read the Docs](https://pyvyos.readthedocs.io/en/latest/).
+
 ## Installation
 
 You can install PyVyOS using pip:
 
-```
-bash
+```bash
 pip install pyvyos
 ```
 
