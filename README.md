@@ -38,29 +38,30 @@ class ApiResponse:
 
 
 #### Configuring Your Environment for VyDevice
-# Rename the file .env.example to .env.
-# Open the .env file in a text editor.
-# Replace the placeholder values with your VyOS device credentials:
-
-```
-VYDEVICE_HOSTNAME: Your device's hostname or IP address.
-VYDEVICE_APIKEY: Your API key for authentication.
-VYDEVICE_PORT: The port number for the API. Default 443
-VYDEVICE_PROTOCOL: The protocol (e.g., http or https). Default https
-VYDEVICE_VERIFY_SSL: Set to True or False for SSL verification. 
-```
+1. Rename the file .env.example to .env.
+1. Open the .env file in a text editor.
+1. Replace the placeholder values with your VyOS device credentials:
+  - **VYDEVICE_HOSTNAME**: Your device's hostname or IP address.
+  - **VYDEVICE_APIKEY**: Your API key for authentication.
+  - **VYDEVICE_PORT**: The port number for the API. Default 443
+  - **VYDEVICE_PROTOCOL**: The protocol (e.g., http or https). Default https
+  - **VYDEVICE_VERIFY_SSL**: Set to True or False for SSL verification. 
 
 
 ```
 # Retrieve VyOS device connection details from environment variables and configure VyDevice
 from dotenv import load_dotenv
 load_dotenv()
+
 hostname = os.getenv('VYDEVICE_HOSTNAME')
 apikey = os.getenv('VYDEVICE_APIKEY')
 port = os.getenv('VYDEVICE_PORT')
 protocol = os.getenv('VYDEVICE_PROTOCOL')
 verify_ssl = os.getenv('VYDEVICE_VERIFY_SSL')
-verify = verify_ssl.lower() == "true" if verify_ssl else True # Convert the verify_ssl value to a boolean
+
+# Convert the verify_ssl value to a boolean
+verify = verify_ssl.lower() == "true" if verify_ssl else True 
+
 device = VyDevice(hostname=hostname, apikey=apikey, port=port, protocol=protocol, verify=verify)
 ```
 
