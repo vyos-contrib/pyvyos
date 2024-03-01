@@ -125,8 +125,8 @@ class VyDevice:
             }
 
             return payload
-            
-        if isinstance(path, list) and len(path) == 1:
+
+        elif isinstance(path, list) and len(path) == 1:
             # If path is a list and contains only one element, use it directly
             data = {'op': op, 'path': path[0]}
         else:
