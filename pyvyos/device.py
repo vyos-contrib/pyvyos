@@ -104,7 +104,28 @@ class VyDevice:
         Returns:
             dict: The payload for the API request.
         """
+        if not path:
+            data = {
+                'op': op,
+                'path': path
+            }
 
+            if file is not None:
+                data['file'] = file
+                
+            if url is not None:
+                data['url'] = url
+            
+            if name is not None:
+                data['name'] = name
+                
+            payload = {
+                'data': json.dumps(data),
+                'key': self.apikey
+            }
+
+            return payload
+            
         if isinstance(path, list) and len(path) == 1:
             # If path is a list and contains only one element, use it directly
             data = {'op': op, 'path': path[0]}
