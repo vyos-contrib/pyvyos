@@ -132,11 +132,16 @@ class VyDevice:
             'key': self.apikey
         }
 
+        if file is not None:
+            data['file'] = file
+
         if url is not None:
             payload['url'] = url
 
-        return payload
+        if name is not None:
+            data['name'] = name
 
+        return payload
 
     def _api_request(self, command, op, path=[], method='POST', file=None, url=None, name=None):
         """
