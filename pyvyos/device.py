@@ -104,8 +104,6 @@ class VyDevice:
         Returns:
             dict: The payload for the API request.
         """
-        if isinstance(path, str):
-            path = [path]
 
         if isinstance(path, list) and len(path) == 1:
             # If path is a list and contains only one element, use it directly
