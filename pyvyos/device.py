@@ -106,24 +106,61 @@ class VyDevice:
         Returns:
             dict: The payload for the API request.
         """
-        data = {
-            'op': op,
-            'path': path
-        }
+        if not path:
+            data = {
+                'op': op,
+                'path': path
+            }
 
-        if file is not None:
-            data['file'] = file
+            if file is not None:
+                data['file'] = file
+                
+            if url is not None:
+                data['url'] = url
             
-        if url is not None:
-            data['url'] = url
-        
-        if name is not None:
-            data['name'] = name
-            
+            if name is not None:
+                data['name'] = name
+                
+            payload = {
+                'data': json.dumps(data),
+                'key': self.apikey
+            }
+
+            return payload
+
+        elif isinstance(path, list) and len(path) == 1:
+            # If path is a list and contains only one element, use it directly
+            data = {'op': op, 'path': path[0]}
+        else:
+            data = []
+            current_command = {'op': op, 'path': []}
+            for p in path:
+                if isinstance(p, list):
+                    # If the current item is a list, merge it into the current command
+                    if current_command['path']:
+                        data.append(current_command)
+                    current_command = {'op': op, 'path': p}
+                else:
+                    # Otherwise, add the item to the current command's path
+                    current_command['path'].append(p)
+
+            # Add the last command to data
+            if current_command['path']:
+                data.append(current_command)
+
         payload = {
             'data': json.dumps(data),
             'key': self.apikey
         }
+
+        if file is not None:
+            data['file'] = file
+
+        if url is not None:
+            payload['url'] = url
+
+        if name is not None:
+            data['name'] = name
 
         return payload
 
