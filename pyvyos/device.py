@@ -51,7 +51,9 @@ class VyDevice:
         image_delete(name, url=None, file=None, path=[]): Delete a specific image.
         show(path=[]): Show configuration information.
         generate(path=[]): Generate configuration based on specified path.
-        configure_set(path=[]): Set configuration based on specified path.
+        configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting 
+                                either a single configuration path or a list of configuration paths. This flexibility 
+                                allows for setting both individual and multiple configurations in a single operation.
         configure_delete(path=[]): Delete configuration based on specified path.
         config_file_save(file=None): Save the configuration to a file.
         config_file_load(file=None): Load the configuration from a file.
@@ -269,13 +271,25 @@ class VyDevice:
         """
         Set configuration based on the given path.
 
+        This method accepts both a single configuration path as a list and a list of configuration paths for setting multiple configurations in one go.
+
         Args:
-            path (list, optional): The path elements for configuration setting (default is an empty list).
+            path (list): The path elements for configuration setting. This can be a list for a single configuration,
+                        or a list of lists for multiple configurations.
 
         Returns:
-            ApiResponse: An ApiResponse object representing the API response.
+            ApiResponse or list of ApiResponse: Returns a single ApiResponse object for a single configuration, or a list of ApiResponse objects for multiple configurations.
         """
-        return self._api_request(command="configure", op='set', path=path, method="POST")
+        # Check if the first element of the path is a list, indicating multiple configurations
+        if path and isinstance(path[0], list):
+            # Process each configuration path separately
+            responses = [self._api_request("configure", "set", [p], "POST") for p in path]
+            # Return a list of ApiResponse objects for multiple configurations
+            return responses
+        else:
+            # Handle a single configuration path
+            return self._api_request("configure", "set", path, "POST")
+
 
     def configure_delete(self, path=[]):
         """
