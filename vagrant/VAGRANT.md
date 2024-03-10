@@ -10,9 +10,11 @@ If you want to only use pyvyos you dont need to install vagrant
 
 1. Install Vagrant
 2. Install VirtualBox
-3. Install Vagrant plugin for vyos
+3. Install Vagrant plugins
 ```
 vagrant plugin install vagrant-vyos
+vagrant plugin install vagrant-dotenv
+
 ```
 4. Install mkisofs
 ```

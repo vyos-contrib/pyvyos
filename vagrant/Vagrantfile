@@ -33,6 +33,17 @@ Vagrant.configure("2") do |config|
         # first boot is not necessary
         pyvyos.ssh.insert_key = true
 
+        # mkdir /opt/vyatta/config/certs   
+        # chmod 0700 /opt/vyatta/config/certs 
+
+        # generate pki certificate self-signed file /opt/vyatta/config/certs/certself     
+        # set pki certificate certself certificate "$(cat /opt/vyatta/config/certs/certself.pem |  tail -n +2  | head -n -1 | tr -d '\n')"
+        # set pki certificate certself private key "$(cat /opt/vyatta/config/certs/certself.key |  tail -n +2  | head -n -1 | tr -d '\n')"
+
+        # generate pki ca file /opt/vyatta/config/certs/certca
+        # set pki ca certca certificate "$(cat /opt/vyatta/config/certs/certca.pem |  tail -n +2  | head -n -1 | tr -d '\n')"
+        # set pki ca certca private key "$(cat /opt/vyatta/config/certs/certca.key |  tail -n +2  | head -n -1 | tr -d '\n')"
+
         # shell script to provision the vyos vm
         pyvyos.vm.provision "shell", inline: <<-SHELL
             #!/bin/vbash
