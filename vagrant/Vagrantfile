@@ -1,0 +1,50 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Documentation: 
+# - read VAGRANT.md
+# - need vagrant plugin install vagrant-vyos
+
+Vagrant.configure("2") do |config|
+    # enable the environment variables
+    # need vagrant plugin install vagrant-dotenv
+    config.env.enable
+
+    # vm to deploy tests
+    config.vm.define "pyvyos" do |pyvyos|
+        pyvyos.vm.box = "vyos/current"
+        pyvyos.vm.hostname = "pyvyos"
+
+        # network configuration of eth1
+        pyvyos.vm.network "private_network", ip: ENV['VYDEVICE_IP'], netmask: ENV['VYDEVICE_NETMASK']
+        pyvyos.ssh.host = ENV['HOST_IP']
+
+        # nat port forwarding
+        pyvyos.vm.network "forwarded_port", guest: 443, host: 8433, id: "https", auto_correct: true, protocol: "tcp", host_ip: ENV['HOST_IP']
+        pyvyos.vm.network "forwarded_port", guest: 22, host: 2022, id: "ssh", auto_correct: true, protocol: "tcp", host_ip: ENV['HOST_IP']
+        
+        # ssh configuration default username and password of vyos/current is vyos / vyos
+        # if you want to change the default password, you can change in provision script
+        # also, you can disable ssh password in provision script and use only ssh key
+        pyvyos.ssh.username = "vyos"
+        pyvyos.ssh.password = "vyos"
+
+        # vagrant will insert the ssh key in the vm automatically, so password authentication after
+        # first boot is not necessary
+        pyvyos.ssh.insert_key = true
+
+        # shell script to provision the vyos vm
+        pyvyos.vm.provision "shell", inline: <<-SHELL
+            #!/bin/vbash
+            source /opt/vyatta/etc/functions/script-template
+            configure
+            set service https listen-address '#{ENV['VYDEVICE_IP']}'
+            set service https api keys id 'apikey' key '#{ENV['VYDEVICE_APIKEY']}'
+            set service https api debug
+            set service https api strict
+            commit
+            save
+            exit
+        SHELL
+    end
+  end

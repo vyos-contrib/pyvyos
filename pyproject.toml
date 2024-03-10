@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyvyos"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
     { name="Roberto Berto", email="463349+robertoberto@users.noreply.github.com" },
 ]
@@ -18,13 +18,13 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gravscale/pyvyos"
-Issues = "https://github.com/gravscale/pyvyos/issues"
+Homepage = "https://github.com/robertoberto/pyvyos"
+Issues = "https://github.com/robertoberto/pyvyos/issues"
 
 [tool.hatch.metadata]
 dependencies = [
     "requests>=2.31.0,<3.0", 
-    "python-dotenv>=1.0.0,<2.0" 
+    "python-dotenv>=1.0.1,<2.0" 
 ]
 dev-dependencies = [
     "pytest>=6.2.2,<7.0"  
@@ -34,10 +34,10 @@ dev-dependencies = [
 name = "pyvyos"
 description = "Python SDK for interacting with VyOS API"
 authors = ["Roberto Berto <463349+robertoberto@users.noreply.github.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [tool.poetry.dependencies]
 python = ">=3.8" 
 requests = "^2.31.0"  
-python-dotenv = "^1.0.0" 
+python-dotenv = "^1.0.1" 
 

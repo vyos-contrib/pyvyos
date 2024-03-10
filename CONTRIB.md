@@ -1,6 +1,6 @@
-# Contributing to PyVyOS
+# Contributing to pyvyos
 
-We welcome contributions to the PyVyOS project! If you're looking to contribute, please take a moment to read this guide to understand how you can be a part of our community and help make PyVyOS better.
+We welcome contributions to the pyvyos project! If you're looking to contribute, please take a moment to read this guide to understand how you can be a part of our community and help make pyvyos better.
 
 ## Code of Conduct
 
@@ -8,7 +8,7 @@ We expect all contributors to adhere to our Code of Conduct. Respectful, collabo
 
 ## How to Contribute
 
-There are many ways to contribute to PyVyOS:
+There are many ways to contribute to pyvyos:
 
 - **Submitting bug reports and feature requests:** Use our issue tracker to report bugs or suggest features.
 - **Writing code:** Feel free to take on open issues or propose new changes. Please follow the guidelines outlined below.
@@ -61,7 +61,7 @@ There are many ways to contribute to PyVyOS:
 
 ## License
 
-By contributing to PyVyOS, you agree that your contributions will be licensed under the same license that covers the project.
+By contributing to pyvyos, you agree that your contributions will be licensed under the same license that covers the project.
 
-Thank you for considering contributing to PyVyOS. Your efforts are what make this project great!
+Thank you for considering contributing to pyvyos. Your efforts are what make this project great!
 

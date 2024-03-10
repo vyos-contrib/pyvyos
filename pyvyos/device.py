@@ -52,8 +52,8 @@ class VyDevice:
         show(path=[]): Show configuration information.
         generate(path=[]): Generate configuration based on specified path.
         configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting 
-                                either a single configuration path or a list of configuration paths. This flexibility 
-                                allows for setting both individual and multiple configurations in a single operation.
+        either a single configuration path or a list of configuration paths. This flexibility 
+        allows for setting both individual and multiple configurations in a single operation.
         configure_delete(path=[]): Delete configuration based on specified path.
         config_file_save(file=None): Save the configuration to a file.
         config_file_load(file=None): Load the configuration from a file.
@@ -98,7 +98,8 @@ class VyDevice:
 
         Args:
             op (str): The operation to perform in the API request.
-            path (list, optional): The path elements for the API request (default is an empty list).
+            path (list, optional): The path elements for the API request. This can be a single list for a single
+                                configuration path or a list of lists for multiple configuration paths.
             file (str, optional): The file to include in the request (default is None).
             url (str, optional): The URL to include in the request (default is None).
             name (str, optional): The name to include in the request (default is None).
@@ -106,63 +107,41 @@ class VyDevice:
         Returns:
             dict: The payload for the API request.
         """
-        if not path:
-            data = {
-                'op': op,
-                'path': path
-            }
+        # Adjusting the data structure based on whether path is single or multiple
+        if isinstance(path[0], list):  # Handling multiple paths
+            data = [{'op': op, 'path': p} for p in path]
+        else:  # Handling a single path
+            data = {'op': op, 'path': path}
 
-            if file is not None:
+        # Including the optional parameters if provided
+        if file:
+            if isinstance(data, list):  # If data is a list of dicts (multiple paths)
+                for d in data:
+                    d['file'] = file
+            else:  # If data is a single dict (single path)
                 data['file'] = file
                 
-            if url is not None:
+        if url:
+            if isinstance(data, list):
+                for d in data:
+                    d['url'] = url
+            else:
                 data['url'] = url
             
-            if name is not None:
+        if name:
+            if isinstance(data, list):
+                for d in data:
+                    d['name'] = name
+            else:
                 data['name'] = name
                 
-            payload = {
-                'data': json.dumps(data),
-                'key': self.apikey
-            }
-
-            return payload
-
-        elif isinstance(path, list) and len(path) == 1:
-            # If path is a list and contains only one element, use it directly
-            data = {'op': op, 'path': path[0]}
-        else:
-            data = []
-            current_command = {'op': op, 'path': []}
-            for p in path:
-                if isinstance(p, list):
-                    # If the current item is a list, merge it into the current command
-                    if current_command['path']:
-                        data.append(current_command)
-                    current_command = {'op': op, 'path': p}
-                else:
-                    # Otherwise, add the item to the current command's path
-                    current_command['path'].append(p)
-
-            # Add the last command to data
-            if current_command['path']:
-                data.append(current_command)
-
         payload = {
             'data': json.dumps(data),
             'key': self.apikey
         }
 
-        if file is not None:
-            data['file'] = file
-
-        if url is not None:
-            payload['url'] = url
-
-        if name is not None:
-            data['name'] = name
-
         return payload
+
 
     def _api_request(self, command, op, path=[], method='POST', file=None, url=None, name=None):
         """
@@ -308,24 +287,13 @@ class VyDevice:
         """
         Set configuration based on the given path.
 
-        This method accepts both a single configuration path as a list and a list of configuration paths for setting multiple configurations in one go.
-
         Args:
-            path (list): The path elements for configuration setting. This can be a list for a single configuration,
-                        or a list of lists for multiple configurations.
+            path (list, optional): The path elements for configuration setting (default is an empty list).
 
         Returns:
-            ApiResponse or list of ApiResponse: Returns a single ApiResponse object for a single configuration, or a list of ApiResponse objects for multiple configurations.
+            ApiResponse: An ApiResponse object representing the API response.
         """
-        # Check if the first element of the path is a list, indicating multiple configurations
-        if path and isinstance(path[0], list):
-            # Process each configuration path separately
-            responses = [self._api_request("configure", "set", [p], "POST") for p in path]
-            # Return a list of ApiResponse objects for multiple configurations
-            return responses
-        else:
-            # Handle a single configuration path
-            return self._api_request("configure", "set", path, "POST")
+        return self._api_request(command="configure", op='set', path=path, method="POST")
 
 
     def configure_delete(self, path=[]):
