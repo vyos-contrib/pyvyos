@@ -1,12 +1,12 @@
-# PyVyOS Documentation
+# pyvyos Documentation
 
-PyVyOS is a Python library for interacting with VyOS devices via their API. This documentation provides a guide on how to use PyVyOS to manage your VyOS devices programmatically.
+pyvyos is a Python library for interacting with VyOS devices via their API. This documentation provides a guide on how to use pyvyos to manage your VyOS devices programmatically.
 
-You can find the complete PyVyOS documentation on [Read the Docs](https://pyvyos.readthedocs.io/en/latest/).
+You can find the complete pyvyos documentation on [Read the Docs](https://pyvyos.readthedocs.io/en/latest/).
 
 ## Installation
 
-You can install PyVyOS using pip:
+You can install pyvyos using pip:
 
 ```bash
 pip install pyvyos
@@ -15,7 +15,7 @@ pip install pyvyos
 ## Getting Started
 
 ### Importing and Disabling Warnings for verify=False
-Before using PyVyOS, it's a good practice to disable urllib3 warnings and import the required modules, IF you use verify=False:
+Before using pyvyos, it's a good practice to disable urllib3 warnings and import the required modules, IF you use verify=False:
 
 ```
 import urllib3
@@ -23,7 +23,7 @@ urllib3.disable_warnings()
 ```
 
 ### Using API Response Class
-PyVyOS uses a custom ApiResponse data class to handle API responses:
+pyvyos uses a custom ApiResponse data class to handle API responses:
 
 ```
 @dataclass
@@ -65,7 +65,7 @@ verify = verify_ssl.lower() == "true" if verify_ssl else True
 device = VyDevice(hostname=hostname, apikey=apikey, port=port, protocol=protocol, verify=verify)
 ```
 
-## Using PyVyOS
+## Using pyvyos
 
 ### configure, then set
 The configure_set method sets a VyOS configuration:
