@@ -107,11 +107,16 @@ class VyDevice:
         Returns:
             dict: The payload for the API request.
         """
-        # Adjusting the data structure based on whether path is single or multiple
-        if isinstance(path[0], list):  # Handling multiple paths
-            data = [{'op': op, 'path': p} for p in path]
-        else:  # Handling a single path
-            data = {'op': op, 'path': path}
+        # Adding option to pass multiple operation (eg:delete and set) commands
+        if op:
+            # Adjusting the data structure based on whether path is single or multiple
+            if path and isinstance(path, list) and isinstance(path[0], list):  # Handling multiple paths
+                data = [{'op': op, 'path': p} for p in path]
+            else:  # Handling a single path
+                data = {'op': op, 'path': path}
+        else:
+            if path and isinstance(path[0], dict):
+                data = path
 
         # Including the optional parameters if provided
         if file:
@@ -307,6 +312,19 @@ class VyDevice:
             ApiResponse: An ApiResponse object representing the API response.
         """
         return self._api_request(command="configure", op='delete', path=path, method="POST")
+
+    def configure_multiple_op(self, op_path=[]):
+        """
+        Set configuration based on the given path for multiple operation.
+
+        Args:
+            op_path (list): The path elements for configuration deletion  or/and setting alongwith operations specific to them.
+            eg: [{'op': 'delete', 'path': [...]}, {'op': 'set', 'path': [...]}]
+
+        Returns:
+            ApiResponse: An ApiResponse object representing the API response.
+        """
+        return self._api_request(command="configure", op=None, path=op_path)
 
     def config_file_save(self, file=None):
         """
