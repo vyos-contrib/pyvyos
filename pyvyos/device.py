@@ -315,16 +315,16 @@ class VyDevice:
 
     def configure_multiple_op(self, op_path=[]):
         """
-        Set configuration based on the given path for multiple operation.
+        Set configuration based on the given {operation : path} for multiple operation.
 
         Args:
-            op_path (list): The path elements for configuration deletion  or/and setting alongwith operations specific to them.
+            op_path (list): The path elements for configuration deletion  or/and setting.
             eg: [{'op': 'delete', 'path': [...]}, {'op': 'set', 'path': [...]}]
 
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="configure", op=None, path=op_path)
+        return self._api_request(command="configure", op="", path=op_path)
 
     def config_file_save(self, file=None):
         """
