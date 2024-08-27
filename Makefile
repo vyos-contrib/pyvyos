@@ -1,15 +1,14 @@
-.PHONE: help
+.PHONY: help
 help:
 	@echo "build - build the package"
 	@echo "upload - upload the package to PyPI"
 
 .PHONY: build
 build:
-	source env/bin/activate
-	python -m build --sdist
-	python -m build --wheel
+	env/bin/python -m build --sdist
+	env/bin/python -m build --wheel
 
+.PHONY: upload
 upload:
-	source env/bin/activate
-	twine check dist/*
-	twine upload dist/*
+	env/bin/python -m twine check dist/*
+	env/bin/python -m twine upload dist/*
