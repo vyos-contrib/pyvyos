@@ -163,3 +163,5 @@ cython_debug/
 vagrant/.vagrant
 packer/
 *.code-workspace
+.env
+
