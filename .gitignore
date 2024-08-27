@@ -164,4 +164,5 @@ vagrant/.vagrant
 packer/
 *.code-workspace
 .env
+dev/
 

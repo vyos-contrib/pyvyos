@@ -1,6 +1,6 @@
 # importing modules
 import warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning)    
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 import sys
 import os
 # adding pyvyos to sys.path
@@ -8,7 +8,7 @@ import os
 
 import unittest
 from dotenv import load_dotenv
-import pprint 
+import pprint
 import random
 import string
 
@@ -18,7 +18,7 @@ from pyvyos.device import ApiResponse
 
 
 # getting env variables
-load_dotenv()  
+load_dotenv()
 hostname = os.getenv('VYDEVICE_HOSTNAME')
 apikey = os.getenv('VYDEVICE_APIKEY')
 port = os.getenv('VYDEVICE_PORT')
@@ -51,16 +51,16 @@ if __name__ == '__main__':
     #pprint.pprint(response)
 
     #response = device.reset(path=["conntrack-sync", "internal-cache"])
-    #pprint.pprint(response)    
+    #pprint.pprint(response)
 
     #response = device.reboot(path=["now"])
-    #pprint.pprint(response)  
+    #pprint.pprint(response)
 
     #response = device.shutdown(path=["now"])
-    #pprint.pprint(response)  
+    #pprint.pprint(response)
 
     #response = device.image_add(url="https://github.com/vyos/vyos-rolling-nightly-builds/releases/download/1.5-rolling-202312130023/vyos-1.5-rolling-202312130023-amd64.iso")
     #pprint.pprint(response)
 
     response = device.image_delete(name="foo")
-    pprint.pprint(response)    
+    pprint.pprint(response)
