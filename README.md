@@ -6,7 +6,7 @@ You can find the complete pyvyos documentation on [Read the Docs](https://pyvyos
 
 ## Installation
 
-You can install pyvyos using pip:
+You can install pyvyos using pip https://pypi.org/project/pyvyos/:
 
 ```bash
 pip install pyvyos
