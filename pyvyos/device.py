@@ -51,9 +51,11 @@ class VyDevice:
         image_delete(name, url=None, file=None, path=[]): Delete a specific image.
         show(path=[]): Show configuration information.
         generate(path=[]): Generate configuration based on specified path.
-        configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting 
-        either a single configuration path or a list of configuration paths. This flexibility 
+        configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting
+        either a single configuration path or a list of configuration paths. This flexibility
         allows for setting both individual and multiple configurations in a single operation.
+        configure(path=[]): Runs the specified path configuraitons in configure mode. This allows both deleting and
+        setting in a single run, accepting a list of configuration paths, running all commands in a single operation.
         configure_delete(path=[]): Delete configuration based on specified path.
         config_file_save(file=None): Save the configuration to a file.
         config_file_load(file=None): Load the configuration from a file.
@@ -109,8 +111,18 @@ class VyDevice:
         """
         # Adjusting the data structure based on whether path is single or multiple
         if isinstance(path[0], list):  # Handling multiple paths
-            data = [{'op': op, 'path': p} for p in path]
+            data = []
+            for p in path:
+                if op is None:
+                    data.append({'op': p[0], 'path': p[1:]})
+                else:
+                    data.append({'op': op, 'path': p})
+
+
         else:  # Handling a single path
+            if op is None:
+                op = path[0]
+                p = p[1:]
             data = {'op': op, 'path': path}
 
         # Including the optional parameters if provided
@@ -120,21 +132,21 @@ class VyDevice:
                     d['file'] = file
             else:  # If data is a single dict (single path)
                 data['file'] = file
-                
+
         if url:
             if isinstance(data, list):
                 for d in data:
                     d['url'] = url
             else:
                 data['url'] = url
-            
+
         if name:
             if isinstance(data, list):
                 for d in data:
                     d['name'] = name
             else:
                 data['name'] = name
-                
+
         payload = {
             'data': json.dumps(data),
             'key': self.apikey
@@ -161,9 +173,9 @@ class VyDevice:
         """
         url = self._get_url(command)
         payload = self._get_payload(op, path=path, file=file, url=url, name=name)
-        
+
         headers = {}
-        error = False      
+        error = False
         result = {}
 
         try:
@@ -172,13 +184,13 @@ class VyDevice:
             if resp.status_code == 200:
                 try:
                     resp_decoded = resp.json()
-                    
+
                     if resp_decoded['success'] == True:
                         result = resp_decoded['data']
                         error = False
-                    else:   
+                    else:
                         error = resp_decoded['error']
-                   
+
                 except json.JSONDecodeError:
                     error = 'json decode error'
             else:
@@ -189,7 +201,7 @@ class VyDevice:
         except requests.exceptions.ConnectionError as e:
             error = 'connection error: ' + str(e)
             status = 0
-  
+
         # Removing apikey from payload for security reasons
         del(payload['key'])
         return ApiResponse(status=status, request=payload, result=result, error=error)
@@ -283,6 +295,18 @@ class VyDevice:
         """
         return self._api_request(command="generate", op='generate', path=path, method="POST")
 
+    def configure(self, path=[]):
+        """
+        Set or delete configuration based on the given path.
+
+        Args:
+            path (list, optional): The path elements for configuration (default is an empty list).
+
+        Returns:
+            ApiResponse: An ApiResponse object representing the API response.
+        """
+        return self._api_request(command="configure", op=None, path=path, method="POST")
+
     def configure_set(self, path=[]):
         """
         Set configuration based on the given path.
@@ -343,7 +367,7 @@ class VyDevice:
             ApiResponse: An ApiResponse object representing the API response.
         """
         return self._api_request(command="reboot", op='reboot', path=path, method="POST")
-    
+
     def poweroff(self, path=["now"]):
         """
         Power off the device.
