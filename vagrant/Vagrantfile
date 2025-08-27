@@ -1,61 +1,42 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+env_vars = File.readlines('.env').each_with_object({}) do |line, hash|
+  next if line.strip.empty? || line.start_with?('#')
+  key, value = line.strip.split('=', 2)
+  hash[key.strip] = value.strip.gsub(/(^['"]|['"]$)/, '')
+end
 
-# Documentation: 
-# - read VAGRANT.md
-# - need vagrant plugin install vagrant-vyos
+HTTPS_PORT = env_vars['VYDEVICE_HTTPS_PORT']
+API_KEY = env_vars['VYDEVICE_APIKEY']
+NETMASK = env_vars['VYDEVICE_NETMASK']
+VYOS_VM_IP = env_vars['VYDEVICE_IP']
+VYOS_VM_HOST_IP = env_vars['VYDEVICE_HOST_IP']
+
+
+$script = <<-SHELL
+  cfg=/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper  
+  $cfg begin
+  $cfg set service https api debug
+  $cfg set service https api keys id apikey key #{API_KEY}
+  $cfg set service https listen-address $1
+  $cfg set service https port #{HTTPS_PORT}
+  $cfg commit
+  $cfg end
+SHELL
 
 Vagrant.configure("2") do |config|
-    # enable the environment variables
-    # need vagrant plugin install vagrant-dotenv
-    config.env.enable
+  # Device VyOS
+  config.vm.define "pyvyos_device" do |pyvyos|
+    pyvyos.vm.box = "vyos/current"
+    pyvyos.vm.hostname = "pyvyos-device-2"
+    pyvyos.vm.network "private_network", ip: VYOS_VM_IP , netmask: NETMASK
+    pyvyos.ssh.host = VYOS_VM_HOST_IP
 
-    # vm to deploy tests
-    config.vm.define "pyvyos" do |pyvyos|
-        pyvyos.vm.box = "vyos/current"
-        pyvyos.vm.hostname = "pyvyos"
+    pyvyos.vm.network "forwarded_port", guest: 443, host: 8433, id: "https", auto_correct: true, protocol: "tcp", host_ip: VYOS_VM_HOST_IP
+    pyvyos.vm.network "forwarded_port", guest: 22, host: 2022, id: "ssh", auto_correct: true, protocol: "tcp", host_ip: VYOS_VM_HOST_IP
 
-        # network configuration of eth1
-        pyvyos.vm.network "private_network", ip: ENV['VYDEVICE_IP'], netmask: ENV['VYDEVICE_NETMASK']
-        pyvyos.ssh.host = ENV['HOST_IP']
+    pyvyos.ssh.username = "vyos"
+    pyvyos.ssh.password = "vyos"
+    pyvyos.ssh.insert_key = false
+    pyvyos.vm.provision "shell", inline: $script, args: [VYOS_VM_IP]
 
-        # nat port forwarding
-        pyvyos.vm.network "forwarded_port", guest: 443, host: 8433, id: "https", auto_correct: true, protocol: "tcp", host_ip: ENV['HOST_IP']
-        pyvyos.vm.network "forwarded_port", guest: 22, host: 2022, id: "ssh", auto_correct: true, protocol: "tcp", host_ip: ENV['HOST_IP']
-        
-        # ssh configuration default username and password of vyos/current is vyos / vyos
-        # if you want to change the default password, you can change in provision script
-        # also, you can disable ssh password in provision script and use only ssh key
-        pyvyos.ssh.username = "vyos"
-        pyvyos.ssh.password = "vyos"
-
-        # vagrant will insert the ssh key in the vm automatically, so password authentication after
-        # first boot is not necessary
-        pyvyos.ssh.insert_key = true
-
-        # mkdir /opt/vyatta/config/certs   
-        # chmod 0700 /opt/vyatta/config/certs 
-
-        # generate pki certificate self-signed file /opt/vyatta/config/certs/certself     
-        # set pki certificate certself certificate "$(cat /opt/vyatta/config/certs/certself.pem |  tail -n +2  | head -n -1 | tr -d '\n')"
-        # set pki certificate certself private key "$(cat /opt/vyatta/config/certs/certself.key |  tail -n +2  | head -n -1 | tr -d '\n')"
-
-        # generate pki ca file /opt/vyatta/config/certs/certca
-        # set pki ca certca certificate "$(cat /opt/vyatta/config/certs/certca.pem |  tail -n +2  | head -n -1 | tr -d '\n')"
-        # set pki ca certca private key "$(cat /opt/vyatta/config/certs/certca.key |  tail -n +2  | head -n -1 | tr -d '\n')"
-
-        # shell script to provision the vyos vm
-        pyvyos.vm.provision "shell", inline: <<-SHELL
-            #!/bin/vbash
-            source /opt/vyatta/etc/functions/script-template
-            configure
-            set service https listen-address '#{ENV['VYDEVICE_IP']}'
-            set service https api keys id 'apikey' key '#{ENV['VYDEVICE_APIKEY']}'
-            set service https api debug
-            set service https api strict
-            commit
-            save
-            exit
-        SHELL
-    end
   end
+end
