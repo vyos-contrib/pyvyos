@@ -141,8 +141,7 @@ class VyDevice:
         }
 
         return payload
-
-
+        
     def _api_request(self, command, op, path=[], method='POST', file=None, url=None, name=None):
         """
         Make an API request.
@@ -161,35 +160,27 @@ class VyDevice:
         """
         url = self._get_url(command)
         payload = self._get_payload(op, path=path, file=file, url=url, name=name)
-        
+
         headers = {}
         error = False      
         result = {}
 
         try:
             resp = requests.post(url, verify=self.verify, data=payload, timeout=self.timeout, headers=headers)
+            resp_decoded = resp.json()
 
-            if resp.status_code == 200:
-                try:
-                    resp_decoded = resp.json()
-                    
-                    if resp_decoded['success'] == True:
-                        result = resp_decoded['data']
-                        error = False
-                    else:   
-                        error = resp_decoded['error']
-                   
-                except json.JSONDecodeError:
-                    error = 'json decode error'
+            if resp_decoded['success']:
+                result = resp_decoded['data']
+                error = False
             else:
-                error = 'http error'
+                error = resp_decoded['error']
 
             status = resp.status_code
 
-        except requests.exceptions.ConnectionError as e:
-            error = 'connection error: ' + str(e)
+        except (requests.exceptions.ConnectionError, json.JSONDecodeError) as e:
+            error = 'Error: ' + str(e)
             status = 0
-  
+
         # Removing apikey from payload for security reasons
         del(payload['key'])
         return ApiResponse(status=status, request=payload, result=result, error=error)
