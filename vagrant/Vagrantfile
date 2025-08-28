@@ -1,3 +1,11 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Documentation:
+# - read VAGRANT.md
+# - need vagrant plugin install vagrant-vyos
+
+
 env_vars = File.readlines('.env').each_with_object({}) do |line, hash|
   next if line.strip.empty? || line.start_with?('#')
   key, value = line.strip.split('=', 2)
@@ -29,14 +37,11 @@ Vagrant.configure("2") do |config|
     pyvyos.vm.hostname = "pyvyos-device-2"
     pyvyos.vm.network "private_network", ip: VYOS_VM_IP , netmask: NETMASK
     pyvyos.ssh.host = VYOS_VM_HOST_IP
-
     pyvyos.vm.network "forwarded_port", guest: 443, host: 8433, id: "https", auto_correct: true, protocol: "tcp", host_ip: VYOS_VM_HOST_IP
     pyvyos.vm.network "forwarded_port", guest: 22, host: 2022, id: "ssh", auto_correct: true, protocol: "tcp", host_ip: VYOS_VM_HOST_IP
-
     pyvyos.ssh.username = "vyos"
     pyvyos.ssh.password = "vyos"
     pyvyos.ssh.insert_key = false
     pyvyos.vm.provision "shell", inline: $script, args: [VYOS_VM_IP]
-
   end
 end
