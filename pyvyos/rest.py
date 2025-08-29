@@ -1,9 +1,9 @@
 import json
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Tuple, List, Union, Dict, Any, Optional
 
 from requests import Request, Response
-from requests.exceptions import HTTPError, ConnectionError
+from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException, JSONDecodeError
 import requests
 
 
@@ -64,119 +64,222 @@ class RestClient:
         """
         return f"{self.protocol}://{self.hostname}:{self.port}/{command}"
 
-    def _get_payload(self, op, path: List = None, file=None, url=None, name=None):
+    def _get_payload(
+        self,
+        op: Optional[str] = None,
+        path: Union[List[str], List[List[str]]] = None,
+        file: Optional[str] = None,
+        url: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
-        Generate the payload for an API request.
+        Generates API request payload based on specified operations and parameters.
 
-        Args:
-            op (str): The operation to perform in the API request.
-            path (list, optional): The path elements for the API request. This can be a single list for a single
-                                configuration path or a list of lists for multiple configuration paths.
-            file (str, optional): The file to include in the request (default is None).
-            url (str, optional): The URL to include in the request (default is None).
-            name (str, optional): The name to include in the request (default is None).
+        Parameters:
+            op (str, optional): Operation to perform (e.g., 'set', 'delete')
+            path (Union[List[str], List[List[str]]], optional):
+                Configuration path(s) for the API. Can be:
+                - Single path as string list
+                - Multiple paths as list of string lists
+            file (str, optional): File path for upload
+            url (str, optional): External resource URL
+            name (str, optional): Resource name
 
         Returns:
-            dict: The payload for the API request.
+            Dict: Formatted API payload containing:
+                - data: JSON-serialized operations
+                - key: API key
+
+        Raises:
+            ValueError: If required parameters are missing or invalid
         """
-        # Adding option to pass multiple operation (eg:delete and set) commands
-        if path is None:
-            path = []
 
-        if op:
-            # Adjusting the data structure based on whether path is single or multiple
-            if (
-                path and isinstance(path, list) and isinstance(path[0], list)
-            ):  # Handling multiple paths
-                data = [{"op": op, "path": p} for p in path]
-            else:  # Handling a single path
-                data = {"op": op, "path": path}
-        else:
-            if path and isinstance(path[0], dict):
-                data = path
+        def _create_operations() -> Union[List[Dict], Dict]:
+            """Creates operation structure based on parameters."""
+            if not op:
+                if not all(isinstance(p, dict) for p in path):
+                    raise ValueError(
+                        "Path must contain dictionaries when no operation is specified"
+                    )
+                return path
 
-        # Including the optional parameters if provided
-        if file:
-            if isinstance(data, list):  # If data is a list of dicts (multiple paths)
-                for d in data:
-                    d["file"] = file
-            else:  # If data is a single dict (single path)
-                data["file"] = file
+            normalized_paths = path or []
+            is_multiple = (
+                isinstance(normalized_paths[0], list) if normalized_paths else False
+            )
 
-        if url:
+            if is_multiple:
+                return [{"op": op, "path": p} for p in normalized_paths]
+            return {"op": op, "path": normalized_paths}
+
+        def _add_optional_params(
+            data: Union[List[Dict], Dict], params: Dict[str, str]
+        ) -> Union[List[Dict], Dict]:
+            """Adds optional parameters to operation structure."""
             if isinstance(data, list):
-                for d in data:
-                    d["url"] = url
-            else:
-                data["url"] = url
+                return [{**item, **params} for item in data]
+            return {**data, **params}
 
-        if name:
-            if isinstance(data, list):
-                for d in data:
-                    d["name"] = name
-            else:
-                data["name"] = name
+        # Initial validation
+        if not op and not path:
+            raise ValueError(
+                "Must provide either 'op' or pre-formatted operations in 'path'"
+            )
 
-        payload = {"data": json.dumps(data), "key": self.apikey}
+        operations = _create_operations()
+        optional_params = {
+            k: v for k, v in zip(["file", "url", "name"], [file, url, name]) if v
+        }
 
-        return payload
+        if optional_params:
+            operations = _add_optional_params(operations, optional_params)
+
+        return {"data": json.dumps(operations), "key": self.apikey}
 
     def _api_request(
-        self, command, op, path=[], method="POST", file=None, url=None, name=None
+        self,
+        command: str,
+        op: Optional[str] = None,
+        path: Optional[List[str]] = None,
+        method: str = "POST",
+        file: Optional[str] = None,
+        resource_url: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """
-        Make an API request.
+        Executes an API request with proper error handling and security measures.
 
-        Args:
-            command (str): The API command to execute.
-            op (str): The operation to perform in the API request.
-            path (list, optional): The path elements for the API request (default is an empty list).
-            method (str, optional): The HTTP method to use for the request (default is 'POST').
-            file (str, optional): The file to include in the request (default is None).
-            url (str, optional): The URL to include in the request (default is None).
-            name (str, optional): The name to include in the request (default is None).
+        Parameters:
+            command (str): API endpoint command to execute
+            op (str, optional): Operation type (e.g., 'create', 'update', 'delete')
+            path (List[str], optional): Hierarchical path for resource location
+            method (str): HTTP method (GET/POST/PUT/DELETE). Default: POST
+            file (str, optional): Local file path for file uploads
+            resource_url (str, optional): External resource URL reference
+            name (str, optional): Resource identifier name
 
         Returns:
-            ApiResponse: An ApiResponse object representing the API response.
+            ApiResponse: Structured response containing:
+                - status: HTTP status code
+                - request: Sanitized request payload
+                - result: Parsed response data
+                - error: Error message if applicable
+
+        Raises:
+            ConnectionError: Network communication failures
+            Timeout: Server response timeout
+            ValueError: Invalid parameter combinations
         """
-        url = self._get_url(command)
-        payload = self._get_payload(op, path=path, file=file, url=url, name=name)
-        headers = {}
 
-        resp = requests.post(
-            url,
-            verify=self.verify,
-            data=payload,
-            timeout=self.timeout,
-            headers=headers,
+        def _prepare_request() -> Dict[str, Any]:
+            """Constructs request components with validation."""
+            if not command:
+                raise ValueError("API command is required")
+
+            return {
+                "url": self._get_url(command),
+                "payload": self._get_payload(op, path=path, file=file, url=resource_url, name=name),
+                "headers": {},
+            }
+
+        def _execute_request(
+            url: str, payload: Dict, headers: Dict
+        ) -> requests.Response:
+            """Sends HTTP request with error handling."""
+            try:
+                return requests.request(
+                    method=method.upper(),
+                    url=url,
+                    verify=self.verify,
+                    data=payload,
+                    timeout=self.timeout,
+                    headers=headers,
+                )
+            except Timeout:
+                raise Timeout(f"Request timed out after {self.timeout} seconds")
+            except RequestException as e:
+                raise ConnectionError(f"Network error: {str(e)}")
+
+        # Initialize mutable defaults safely
+        path = path or []
+
+        # Request execution flow
+        request_components = _prepare_request()
+        response = _execute_request(**request_components)
+        status, result, error = self._validate_response(response)
+
+        # Sanitize sensitive data before returning
+        sanitized_payload = request_components["payload"].copy()
+        sanitized_payload.pop("key", None)
+
+        return ApiResponse(
+            status=status, request=sanitized_payload, result=result, error=error
         )
-        status, result, error = self._validate_response(resp)
-
-        # Removing apikey from payload for security reasons
-        del payload["key"]
-        return ApiResponse(status=status, request=payload, result=result, error=error)
 
     @classmethod
-    def _validate_response(cls, resp: Response) -> Tuple:
-        status = None
-        result = {}
+    def _validate_response(cls, resp: Response) -> Tuple[Optional[int], Dict[str, Any], Union[str, bool]]:
+        """
+        Validates and processes API responses with comprehensive error handling.
+
+        Parameters:
+            resp (Response): HTTP response object from requests library
+
+        Returns:
+            Tuple containing:
+            - status (int | None): HTTP status code
+            - result (dict): Parsed successful response data
+            - error (str | bool): Error message (False indicates success)
+
+        Raises:
+            ValueError: For invalid response structures
+            RuntimeError: For unexpected parsing failures
+
+        Processing Flow:
+            1. HTTP Status Code Validation
+            2. Response Body Parsing
+            3. API Success/Failure Flag Check
+            4. Error Message Extraction
+            5. Fallback Error Handling
+        """
+        status: Optional[int] = None
+        result: Dict[str, Any] = {}
+        error: Union[str, bool] = False
+
+        def _validate_schema(response_json: Dict[str, Any]) -> None:
+            """Validates response structure against API contract."""
+            required_keys = {'success', 'data', 'error'}
+            if not required_keys.issubset(response_json.keys()):
+                missing = required_keys - response_json.keys()
+                raise ValueError(f"Invalid response structure. Missing keys: {missing}")
 
         try:
+            # Validate HTTP status code
             resp.raise_for_status()
-            resp_decoded = resp.json()
-            if resp_decoded["success"]:
-                result = resp_decoded["data"]
-                error = False
-            else:
-                error = resp_decoded["error"]
-
             status = resp.status_code
 
-        except json.JSONDecodeError as exc:
-            error = "JSONDecodeError: " + str(exc)
+            # Parse and validate JSON structure
+            resp_decoded = resp.json()
+            _validate_schema(resp_decoded)
 
-        except (ConnectionError, HTTPError) as exc:
-            error = "API Error: " + str(exc.response.text)
-            status = exc.response.status_code
+            # Process API business logic
+            if resp_decoded["success"]:
+                result = resp_decoded["data"]
+            else:
+                error = f"API Error {status}: {resp_decoded['error']}"
+
+        except JSONDecodeError as exc:
+            error = f"Invalid response format: {str(exc)}"
+            status = resp.status_code if resp else 500
+
+        except HTTPError as exc:
+            status = exc.response.status_code if exc.response else 500
+            error = f"HTTP Error {status}: {exc.response.text[:200] if exc.response else 'Unknown error'}"
+
+        except ValueError as exc:
+            error = f"Validation Error: {str(exc)}"
+
+        except Exception as exc:
+            error = f"Unexpected error: {str(exc)}"
+            status = 500
 
         return status, result, error
