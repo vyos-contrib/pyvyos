@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyvyos"
-version = "0.2.2"
+version = "0.3.0"
 authors = [
     { name="Roberto Berto", email="463349+robertoberto@users.noreply.github.com" },
 ]
@@ -34,7 +34,7 @@ dev-dependencies = [
 name = "pyvyos"
 description = "Python SDK for interacting with VyOS API"
 authors = ["Roberto Berto <463349+robertoberto@users.noreply.github.com>"]
-version = "0.2.2"
+version = "0.3.0"
 
 [tool.poetry.dependencies]
 python = ">=3.8"

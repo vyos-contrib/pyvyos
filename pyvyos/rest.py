@@ -52,7 +52,6 @@ class RestClient(ABC):
             port: Porta de acesso
             verify: Verificar certificados SSL
             timeout: Timeout de requisição em segundos
-            max_retries: Número máximo de tentativas de reconexão
         """
         super().__init__()
         self.hostname = hostname
