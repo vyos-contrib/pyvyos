@@ -33,7 +33,7 @@ class ApiResponse:
 
 
 class RestClient(ABC):
-    """Client REST seguro para integração com APIs de dispositivos VyOS"""
+    """Secure REST client for integration with VyOS device APIs"""
 
     def __init__(
         self,
@@ -46,12 +46,12 @@ class RestClient(ABC):
     ):
         """
         Args:
-            hostname: Endereço do dispositivo VyOS
-            apikey: Chave de API para autenticação
-            protocol: Protocolo (http/https)
-            port: Porta de acesso
-            verify: Verificar certificados SSL
-            timeout: Timeout de requisição em segundos
+            hostname: VyOS device address
+            apikey: API key for authentication
+            protocol: Protocol (http/https)
+            port: Access port
+            verify: Verify SSL certificates
+            timeout: Request timeout in seconds
         """
         super().__init__()
         self.hostname = hostname
