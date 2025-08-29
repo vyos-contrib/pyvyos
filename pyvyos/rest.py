@@ -1,10 +1,17 @@
 import json
+from abc import ABC
 from dataclasses import dataclass
 from typing import Tuple, List, Union, Dict, Any, Optional
 
-from requests import Request, Response
-from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException, JSONDecodeError
 import requests
+from requests import Response
+from requests.exceptions import (
+    HTTPError,
+    ConnectionError,
+    Timeout,
+    RequestException,
+    JSONDecodeError,
+)
 
 
 @dataclass
@@ -25,26 +32,29 @@ class ApiResponse:
     error: str
 
 
-class RestClient:
+class RestClient(ABC):
+    """Client REST seguro para integração com APIs de dispositivos VyOS"""
 
     def __init__(
         self,
         hostname: str,
         apikey: str,
-        protocol: str,
-        port: int,
-        verify: bool,
-        timeout: int,
+        protocol: str = "https",
+        port: int = 443,
+        verify: bool = True,
+        timeout: int = 10,
     ):
         """
         Args:
-            hostname (str): The hostname or IP address of the VyOS device.
-            apikey (str): The API key for authentication.
-            protocol (str, optional): The protocol to use (default is 'https').
-            port (int, optional): The port to use (default is 443).
-            verify (bool, optional): Whether to verify SSL certificates (default is True).
-            timeout (int, optional): The request timeout in seconds (default is 10).
+            hostname: Endereço do dispositivo VyOS
+            apikey: Chave de API para autenticação
+            protocol: Protocolo (http/https)
+            port: Porta de acesso
+            verify: Verificar certificados SSL
+            timeout: Timeout de requisição em segundos
+            max_retries: Número máximo de tentativas de reconexão
         """
+        super().__init__()
         self.hostname = hostname
         self.apikey = apikey
         self.protocol = protocol
@@ -178,7 +188,9 @@ class RestClient:
 
             return {
                 "url": self._get_url(command),
-                "payload": self._get_payload(op, path=path, file=file, url=resource_url, name=name),
+                "payload": self._get_payload(
+                    op, path=path, file=file, url=resource_url, name=name
+                ),
                 "headers": {},
             }
 
@@ -217,7 +229,9 @@ class RestClient:
         )
 
     @classmethod
-    def _validate_response(cls, resp: Response) -> Tuple[Optional[int], Dict[str, Any], Union[str, bool]]:
+    def _validate_response(
+        cls, resp: Response
+    ) -> Tuple[Optional[int], Dict[str, Any], Union[str, bool]]:
         """
         Validates and processes API responses with comprehensive error handling.
 
@@ -247,7 +261,7 @@ class RestClient:
 
         def _validate_schema(response_json: Dict[str, Any]) -> None:
             """Validates response structure against API contract."""
-            required_keys = {'success', 'data', 'error'}
+            required_keys = {"success", "data", "error"}
             if not required_keys.issubset(response_json.keys()):
                 missing = required_keys - response_json.keys()
                 raise ValueError(f"Invalid response structure. Missing keys: {missing}")
