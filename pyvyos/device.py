@@ -1,4 +1,5 @@
-from typing import List
+import warnings
+from typing import List, Literal
 
 from .rest import ApiResponse, RestClient
 
@@ -48,12 +49,32 @@ class VyDevice(RestClient):
         self,
         hostname: str,
         apikey: str,
-        protocol: str = "https",
+        protocol: Literal["http", "https"] = "https",
         port: int = 443,
         verify: bool = True,
         timeout: int = 10,
     ):
-        super().__init__(hostname, apikey, protocol, port, verify, timeout)
+        super().__init__(
+            hostname, apikey, protocol, int(port), bool(verify), int(timeout)
+        )
+        self._validate_params()
+
+    def _validate_params(
+        self,
+    ) -> None:
+        """Validação centralizada de parâmetros"""
+        if not isinstance(self.hostname, str) or len(self.hostname) < 3:
+            raise ValueError("Invalid hostname")
+
+        if self.protocol not in ("http", "https"):
+            raise ValueError("The protocol must be http or https")
+
+        if not 1 <= self.port <= 65535:
+            raise ValueError("Port out of valid range (1-65535)")
+
+        if self.timeout and self.timeout < 1:
+            print(self.timeout)
+            warnings.warn("Timeout below 1s may cause instability", UserWarning)
 
     def retrieve_show_config(self, path: List = None):
         """

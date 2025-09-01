@@ -65,3 +65,15 @@ By contributing to pyvyos, you agree that your contributions will be licensed un
 
 Thank you for considering contributing to pyvyos. Your efforts are what make this project great!
 
+## Unit Tests
+Ensure you've installed development dependencies first:
+```bash
+ poetry install --with dev
+```
+
+To view test coverage:
+```bash
+ pytest --cov
+```
+
+**Note:** Tests should run against a development environment or mocked device to prevent production changes.

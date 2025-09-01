@@ -35,13 +35,20 @@ class ApiResponse:
 class RestClient(ABC):
     """Secure REST client for integration with VyOS device APIs"""
 
+    hostname: str
+    apikey: str
+    protocol: str
+    port: int
+    verify: bool
+    timeout: int
+
     def __init__(
         self,
         hostname: str,
         apikey: str,
         protocol: str = "https",
         port: int = 443,
-        verify: bool = True,
+        verify: bool = False,
         timeout: int = 10,
     ):
         """
@@ -184,39 +191,23 @@ class RestClient(ABC):
             """Constructs request components with validation."""
             if not command:
                 raise ValueError("API command is required")
-
             return {
                 "url": self._get_url(command),
+                "method": method,
+                "verify": self.verify,
+                "timeout": self.timeout,
                 "payload": self._get_payload(
                     op, path=path, file=file, url=resource_url, name=name
                 ),
                 "headers": {},
             }
 
-        def _execute_request(
-            url: str, payload: Dict, headers: Dict
-        ) -> requests.Response:
-            """Sends HTTP request with error handling."""
-            try:
-                return requests.request(
-                    method=method.upper(),
-                    url=url,
-                    verify=self.verify,
-                    data=payload,
-                    timeout=self.timeout,
-                    headers=headers,
-                )
-            except Timeout:
-                raise Timeout(f"Request timed out after {self.timeout} seconds")
-            except RequestException as e:
-                raise ConnectionError(f"Network error: {str(e)}")
-
         # Initialize mutable defaults safely
         path = path or []
 
         # Request execution flow
         request_components = _prepare_request()
-        response = _execute_request(**request_components)
+        response = self._execute_request(**request_components)
         status, result, error = self._validate_response(response)
 
         # Sanitize sensitive data before returning
@@ -226,6 +217,31 @@ class RestClient(ABC):
         return ApiResponse(
             status=status, request=sanitized_payload, result=result, error=error
         )
+
+    @classmethod
+    def _execute_request(
+        cls,
+        url: str,
+        method: str,
+        verify: bool,
+        timeout: int,
+        payload: Dict,
+        headers: Dict,
+    ) -> requests.Response:
+        """Sends HTTP request with error handling."""
+        try:
+            return requests.request(
+                method=method.upper(),
+                url=url,
+                verify=verify,
+                data=payload,
+                timeout=timeout,
+                headers=headers,
+            )
+        except Timeout:
+            raise Timeout(f"Request timed out after {timeout} seconds")
+        except RequestException as e:
+            raise ConnectionError(f"Network error: {str(e)}")
 
     @classmethod
     def _validate_response(
