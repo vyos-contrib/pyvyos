@@ -291,7 +291,7 @@ def test_device_configure_multiple_op(monkeypatch, test_device):
     assert api_resp
 
 
-def test_device_invalid_path_configure_set(monkeypatch, test_device):
+def test_device_invalid_path_multiple_op(monkeypatch, test_device):
     def mock_configure_set(*args, **kwargs):
         response = requests.Response()
         response.status_code = 200
@@ -310,3 +310,44 @@ def test_device_invalid_path_configure_set(monkeypatch, test_device):
     )
     with pytest.raises(ValueError):
         test_device.configure_multiple_op(op_path="interfaces")
+
+
+def test_device_invalid_request(monkeypatch, test_device):
+    def mock_invalid_request(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 400
+        response.json = lambda: {
+            "success": False,
+            "data": None,
+            "error": "Bad Request",
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_invalid_request,
+    )
+
+    api_resp = test_device.show(path=["invalid", "path"])
+    assert not api_resp.result
+    assert api_resp.status == 400
+    assert "HTTP Error" in api_resp.error
+
+
+def test_device_error_json_response(monkeypatch, test_device):
+    def mock_error_json_response(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.data = "This is not a JSON response"
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_error_json_response,
+    )
+
+    api_resp = test_device.show(path=["system", "image"])
+    assert not api_resp.result
+    assert "Invalid response format" in api_resp.error

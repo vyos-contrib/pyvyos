@@ -277,7 +277,7 @@ class RestClient(ABC):
         def _validate_schema(response_json: Dict[str, Any]) -> None:
             """Validates response structure against API contract."""
             required_keys = {"success", "data", "error"}
-            if not required_keys.issubset(response_json.keys()):
+            if isinstance(response_json, dict) and not required_keys.issubset(response_json.keys()):
                 missing = required_keys - response_json.keys()
                 raise ValueError(f"Invalid response structure. Missing keys: {missing}")
 
@@ -298,11 +298,13 @@ class RestClient(ABC):
 
         except JSONDecodeError as exc:
             error = f"Invalid response format: {str(exc)}"
-            status = resp.status_code if resp else 500
+            status = resp.status_code if resp is not None and isinstance(resp, Response) else 500
+
 
         except HTTPError as exc:
-            status = exc.response.status_code if exc.response else 500
-            error = f"HTTP Error {status}: {exc.response.text[:200] if exc.response else 'Unknown error'}"
+            response = exc.response
+            status = response.status_code if response is not None and isinstance(response, Response) else 500
+            error = f"HTTP Error {status}: {response.text[:200] if response else 'Unknown error'}"
 
         except ValueError as exc:
             error = f"Validation Error: {str(exc)}"
