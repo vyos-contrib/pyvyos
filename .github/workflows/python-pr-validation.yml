@@ -28,5 +28,4 @@ jobs:
 
       - name: Python Run Tests
         run: |
-          pytest -v -o junit_family=xunit1 --cov=. --cov-report xml:tests/coverage.xml --junitxml=tests/nosetests.xml
-
+          pytest -v --cov
