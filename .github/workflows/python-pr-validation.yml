@@ -1,0 +1,31 @@
+name: Python Pull Request Validation Workflow
+
+on:
+    pull_request:
+        branches: [ "main", "master" ]
+
+jobs:
+  Validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install poetry
+          pip install pytest
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
+
+      - name: Python Run Tests
+        run: |
+          pytest -v -o junit_family=xunit1 --cov=. --cov-report xml:tests/coverage.xml --junitxml=tests/nosetests.xml
+
