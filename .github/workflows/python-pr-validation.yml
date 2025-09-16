@@ -28,4 +28,4 @@ jobs:
 
       - name: Python Run Tests
         run: |
-          pytest -v --cov
+          pytest -v
