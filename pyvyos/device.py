@@ -73,7 +73,6 @@ class VyDevice(RestClient):
             raise ValueError("Port out of valid range (1-65535)")
 
         if self.timeout and self.timeout < 1:
-            print(self.timeout)
             warnings.warn("Timeout below 1s may cause instability", UserWarning)
 
     def retrieve_show_config(self, path: List = None):
