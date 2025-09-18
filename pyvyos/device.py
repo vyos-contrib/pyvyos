@@ -54,7 +54,7 @@ class VyDevice:
         configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting
         either a single configuration path or a list of configuration paths. This flexibility
         allows for setting both individual and multiple configurations in a single operation.
-        configure(path=[]): Runs the specified path configuraitons in configure mode. This allows both deleting and
+        configure(path=[]): Runs the specified path configurations in configure mode. This allows both deleting and
         setting in a single run, accepting a list of configuration paths, running all commands in a single operation.
         configure_delete(path=[]): Delete configuration based on specified path.
         config_file_save(file=None): Save the configuration to a file.
