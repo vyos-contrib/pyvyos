@@ -26,4 +26,4 @@ jobs:
 
       - name: Python Run Tests
         run: |
-          pytest -v
+          uv run pytest -v
