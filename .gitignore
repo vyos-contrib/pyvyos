@@ -165,4 +165,4 @@ packer/
 *.code-workspace
 .env
 dev/
-
+.idea

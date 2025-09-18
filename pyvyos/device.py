@@ -1,26 +1,10 @@
-import urllib3
-import requests
-import json
-import pprint
-from dataclasses import dataclass
+import warnings
+from typing import List, Literal
 
-@dataclass
-class ApiResponse:
-    """
-    Represents an API response.
+from .rest import ApiResponse, RestClient
 
-    Attributes:
-        status (int): The HTTP status code of the response.
-        request (dict): The request payload sent to the API.
-        result (dict): The data result of the API response.
-        error (str): Any error message in case of a failed response.
-    """
-    status: int
-    request: dict
-    result: dict
-    error: str
 
-class VyDevice:
+class VyDevice(RestClient):
     """
     Represents a device for interacting with the VyOS API.
 
@@ -51,8 +35,8 @@ class VyDevice:
         image_delete(name, url=None, file=None, path=[]): Delete a specific image.
         show(path=[]): Show configuration information.
         generate(path=[]): Generate configuration based on specified path.
-        configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting 
-        either a single configuration path or a list of configuration paths. This flexibility 
+        configure_set(path=[]): Sets configuration based on the specified path. This method is versatile, accepting
+        either a single configuration path or a list of configuration paths. This flexibility
         allows for setting both individual and multiple configurations in a single operation.
         configure_delete(path=[]): Delete configuration based on specified path.
         config_file_save(file=None): Save the configuration to a file.
@@ -61,140 +45,37 @@ class VyDevice:
         poweroff(path=["now"]): Power off the device.
     """
 
-    def __init__(self, hostname, apikey, protocol='https', port=443, verify=True, timeout=10):
-        """
-        Initializes a VyDevice instance.
+    def __init__(
+        self,
+        hostname: str,
+        apikey: str,
+        protocol: Literal["http", "https"] = "https",
+        port: int = 443,
+        verify: bool = True,
+        timeout: int = 10,
+    ):
+        super().__init__(
+            hostname, apikey, protocol, int(port), bool(verify), int(timeout)
+        )
+        self._validate_params()
 
-        Args:
-            hostname (str): The hostname or IP address of the VyOS device.
-            apikey (str): The API key for authentication.
-            protocol (str, optional): The protocol to use (default is 'https').
-            port (int, optional): The port to use (default is 443).
-            verify (bool, optional): Whether to verify SSL certificates (default is True).
-            timeout (int, optional): The request timeout in seconds (default is 10).
-        """
-        self.hostname = hostname
-        self.apikey = apikey
-        self.protocol = protocol
-        self.port = port
-        self.verify = verify
-        self.timeout = timeout
+    def _validate_params(
+        self,
+    ) -> None:
+        """Validação centralizada de parâmetros"""
+        if not isinstance(self.hostname, str) or len(self.hostname) < 3:
+            raise ValueError("Invalid hostname")
 
-    def _get_url(self, command):
-        """
-        Get the full URL for a specific API command.
+        if self.protocol not in ("http", "https"):
+            raise ValueError("The protocol must be http or https")
 
-        Args:
-            command (str): The API command to construct the URL for.
+        if not 1 <= self.port <= 65535:
+            raise ValueError("Port out of valid range (1-65535)")
 
-        Returns:
-            str: The full URL for the API command.
-        """
-        return f"{self.protocol}://{self.hostname}:{self.port}/{command}"
+        if self.timeout and self.timeout < 1:
+            warnings.warn("Timeout below 1s may cause instability", UserWarning)
 
-    def _get_payload(self, op, path=[], file=None, url=None, name=None):
-        """
-        Generate the payload for an API request.
-
-        Args:
-            op (str): The operation to perform in the API request.
-            path (list, optional): The path elements for the API request. This can be a single list for a single
-                                configuration path or a list of lists for multiple configuration paths.
-            file (str, optional): The file to include in the request (default is None).
-            url (str, optional): The URL to include in the request (default is None).
-            name (str, optional): The name to include in the request (default is None).
-
-        Returns:
-            dict: The payload for the API request.
-        """
-        # Adjusting the data structure based on whether path is single or multiple
-        if isinstance(path[0], list):  # Handling multiple paths
-            data = [{'op': op, 'path': p} for p in path]
-        else:  # Handling a single path
-            data = {'op': op, 'path': path}
-
-        # Including the optional parameters if provided
-        if file:
-            if isinstance(data, list):  # If data is a list of dicts (multiple paths)
-                for d in data:
-                    d['file'] = file
-            else:  # If data is a single dict (single path)
-                data['file'] = file
-                
-        if url:
-            if isinstance(data, list):
-                for d in data:
-                    d['url'] = url
-            else:
-                data['url'] = url
-            
-        if name:
-            if isinstance(data, list):
-                for d in data:
-                    d['name'] = name
-            else:
-                data['name'] = name
-                
-        payload = {
-            'data': json.dumps(data),
-            'key': self.apikey
-        }
-
-        return payload
-
-
-    def _api_request(self, command, op, path=[], method='POST', file=None, url=None, name=None):
-        """
-        Make an API request.
-
-        Args:
-            command (str): The API command to execute.
-            op (str): The operation to perform in the API request.
-            path (list, optional): The path elements for the API request (default is an empty list).
-            method (str, optional): The HTTP method to use for the request (default is 'POST').
-            file (str, optional): The file to include in the request (default is None).
-            url (str, optional): The URL to include in the request (default is None).
-            name (str, optional): The name to include in the request (default is None).
-
-        Returns:
-            ApiResponse: An ApiResponse object representing the API response.
-        """
-        url = self._get_url(command)
-        payload = self._get_payload(op, path=path, file=file, url=url, name=name)
-        
-        headers = {}
-        error = False      
-        result = {}
-
-        try:
-            resp = requests.post(url, verify=self.verify, data=payload, timeout=self.timeout, headers=headers)
-
-            if resp.status_code == 200:
-                try:
-                    resp_decoded = resp.json()
-                    
-                    if resp_decoded['success'] == True:
-                        result = resp_decoded['data']
-                        error = False
-                    else:   
-                        error = resp_decoded['error']
-                   
-                except json.JSONDecodeError:
-                    error = 'json decode error'
-            else:
-                error = 'http error'
-
-            status = resp.status_code
-
-        except requests.exceptions.ConnectionError as e:
-            error = 'connection error: ' + str(e)
-            status = 0
-  
-        # Removing apikey from payload for security reasons
-        del(payload['key'])
-        return ApiResponse(status=status, request=payload, result=result, error=error)
-
-    def retrieve_show_config(self, path=[]):
+    def retrieve_show_config(self, path: List = None):
         """
         Retrieve and show the device configuration.
 
@@ -204,9 +85,12 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="retrieve", op='showConfig', path=path, method="POST")
 
-    def retrieve_return_values(self, path=[]):
+        return self._api_request(
+            command="retrieve", op="showConfig", path=path, method="POST"
+        )
+
+    def retrieve_return_values(self, path: List = None):
         """
         Retrieve and return specific configuration values.
 
@@ -216,9 +100,11 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="retrieve", op='returnValues', path=path, method="POST")
+        return self._api_request(
+            command="retrieve", op="returnValues", path=path, method="POST"
+        )
 
-    def reset(self, path=[]):
+    def reset(self, path: List = None):
         """
         Reset a specific configuration element.
 
@@ -228,7 +114,7 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="reset", op='reset', path=path, method="POST")
+        return self._api_request(command="reset", op="reset", path=path, method="POST")
 
     def image_add(self, url=None, file=None, path=[]):
         """
@@ -242,7 +128,7 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="image", op='add', url=url, method="POST")
+        return self._api_request(command="image", op="add", url=url, method="POST")
 
     def image_delete(self, name, url=None, file=None, path=[]):
         """
@@ -257,9 +143,9 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="image", op='delete', name=name, method="POST")
+        return self._api_request(command="image", op="delete", name=name, method="POST")
 
-    def show(self, path=[]):
+    def show(self, path: List = None):
         """
         Show configuration information.
 
@@ -269,9 +155,9 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="show", op='show', path=path, method="POST")
+        return self._api_request(command="show", op="show", path=path, method="POST")
 
-    def generate(self, path=[]):
+    def generate(self, path: List = None):
         """
         Generate configuration based on the given path.
 
@@ -281,9 +167,11 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="generate", op='generate', path=path, method="POST")
+        return self._api_request(
+            command="generate", op="generate", path=path, method="POST"
+        )
 
-    def configure_set(self, path=[]):
+    def configure_set(self, path: List = None):
         """
         Set configuration based on the given path.
 
@@ -293,10 +181,11 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="configure", op='set', path=path, method="POST")
+        return self._api_request(
+            command="configure", op="set", path=path, method="POST"
+        )
 
-
-    def configure_delete(self, path=[]):
+    def configure_delete(self, path: List = None):
         """
         Delete configuration based on the given path.
 
@@ -306,7 +195,22 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="configure", op='delete', path=path, method="POST")
+        return self._api_request(
+            command="configure", op="delete", path=path, method="POST"
+        )
+
+    def configure_multiple_op(self, op_path: List = None):
+        """
+        Set configuration based on the given {operation : path} for multiple operation.
+
+        Args:
+            op_path (list): The path elements for configuration deletion  or/and setting.
+            eg: [{'op': 'delete', 'path': [...]}, {'op': 'set', 'path': [...]}]
+
+        Returns:
+            ApiResponse: An ApiResponse object representing the API response.
+        """
+        return self._api_request(command="configure", op="", path=op_path)
 
     def config_file_save(self, file=None):
         """
@@ -318,7 +222,9 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="config-file", op='save', file=file, method="POST")
+        return self._api_request(
+            command="config-file", op="save", file=file, method="POST"
+        )
 
     def config_file_load(self, file=None):
         """
@@ -330,9 +236,11 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="config-file", op='load', file=file, method="POST")
+        return self._api_request(
+            command="config-file", op="load", file=file, method="POST"
+        )
 
-    def reboot(self, path=["now"]):
+    def reboot(self, path: List = None):
         """
         Reboot the device.
 
@@ -342,9 +250,14 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="reboot", op='reboot', path=path, method="POST")
-    
-    def poweroff(self, path=["now"]):
+        if path is None:
+            path = ["now"]
+
+        return self._api_request(
+            command="reboot", op="reboot", path=path, method="POST"
+        )
+
+    def poweroff(self, path: List = None):
         """
         Power off the device.
 
@@ -354,4 +267,9 @@ class VyDevice:
         Returns:
             ApiResponse: An ApiResponse object representing the API response.
         """
-        return self._api_request(command="poweroff", op='poweroff', path=path, method="POST")
+        if path is None:
+            path = ["now"]
+
+        return self._api_request(
+            command="poweroff", op="poweroff", path=path, method="POST"
+        )

@@ -13,7 +13,6 @@ If you want to only use pyvyos you dont need to install vagrant
 3. Install Vagrant plugins
 ```
 vagrant plugin install vagrant-vyos
-vagrant plugin install vagrant-dotenv
 
 ```
 4. Install mkisofs
@@ -21,11 +20,16 @@ vagrant plugin install vagrant-dotenv
 sudo apt install genisoimage
 ```
 
-5. Run vagrant up
+5. Create .env file
+```
+mv .env.example .env
+```
+
+6. Run vagrant up
 ```
 vagrant up
 ```
-6. Run vagrant ssh
+7. Run vagrant ssh
 ```
 vagrant ssh
 ```
