@@ -20,7 +20,7 @@ There are many ways to contribute to pyvyos:
    - Start by forking the repository and then cloning it to your local machine.
 
 2. **Set Up Your Environment**
-   - We recommend using Poetry for dependency management. Ensure you have Poetry installed and then run `poetry install` to set up your environment.
+   - We recommend using [uv](https://docs.astral.sh/uv/) for dependency management. Ensure you have Uv installed and then run `uv pip install -e .[dev]` to set up your environment.
 
 3. **Create a Feature Branch**
    - Create a branch for your feature or bugfix, e.g., `git checkout -b feature/add-new-command`.
@@ -68,12 +68,12 @@ Thank you for considering contributing to pyvyos. Your efforts are what make thi
 ## Unit Tests
 Ensure you've installed development dependencies first:
 ```bash
- poetry install --with dev
+ uv pip install -e .[dev]
 ```
 
 To view test coverage:
 ```bash
- pytest --cov
+ pytest -v --cov
 ```
 
 **Note:** Tests should run against a development environment or mocked device to prevent production changes.

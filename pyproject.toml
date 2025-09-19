@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.20"]
 build-backend = "hatchling.build"
 
 [project]
@@ -10,11 +10,23 @@ authors = [
 ]
 description = "Python SDK for interacting with VyOS API"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.13"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.32.0,<3.0",
+    "python-dotenv>=1.0.1,<2.0",
+    "urllib3>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.5,<9.0.0",
+    "pytest-cov>=4.1,<6.0",
+    "pytest-env>=0.6.2,<0.7",
 ]
 
 [project.urls]
@@ -23,25 +35,10 @@ Issues = "https://github.com/vyos-contrib/pyvyos/issues"
 
 [tool.hatch.metadata]
 dependencies = [
-    "requests>=2.31.0,<3.0",
-    "python-dotenv>=1.0.1,<2.0"
+    "requests>=2.32.0,<3.0",
+    "python-dotenv>=1.0.1,<2.0",
+    "urllib3>=2.5.0",
 ]
-
-[tool.poetry]
-name = "pyvyos"
-description = "Python SDK for interacting with VyOS API"
-authors = ["Roberto Berto <463349+robertoberto@users.noreply.github.com>"]
-version = "0.3.0"
-
-[tool.poetry.dependencies]
-python = ">=3.8"
-requests = "^2.32.0"
-python-dotenv = "^1.0.1"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.2.5"
-pytest-cov = "^4.1.0"
-pytest-env = "^0.6.2"
 
 [tool.pytest.ini_options]
 testpaths = ["./tests"]
