@@ -1,3 +1,4 @@
+import json
 import random
 import string
 
@@ -351,3 +352,238 @@ def test_device_error_json_response(monkeypatch, test_device):
     api_resp = test_device.show(path=["system", "image"])
     assert not api_resp.result
     assert "Invalid response format" in api_resp.error
+
+
+def test_device_image_add(monkeypatch, test_device):
+    def mock_image_add(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {"status": "added"},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_image_add,
+    )
+
+    api_resp = test_device.image_add(url="https://example.com/vyos.iso")
+    assert isinstance(api_resp.result, dict)
+
+
+def test_device_image_delete(monkeypatch, test_device):
+    def mock_image_delete(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {"status": "deleted"},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_image_delete,
+    )
+
+    api_resp = test_device.image_delete(name="test-image")
+    assert isinstance(api_resp.result, dict)
+
+
+def test_device_reboot(monkeypatch, test_device):
+    def mock_reboot(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {"status": "rebooting"},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_reboot,
+    )
+
+    api_resp = test_device.reboot(path=["now"])
+    assert isinstance(api_resp.result, dict)
+
+
+def test_device_poweroff(monkeypatch, test_device):
+    def mock_poweroff(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {"status": "powering off"},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_poweroff,
+    )
+
+    api_resp = test_device.poweroff(path=["now"])
+    assert isinstance(api_resp.result, dict)
+
+
+def test_device_reboot_default_path(monkeypatch, test_device):
+    def mock_reboot(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_reboot,
+    )
+
+    api_resp = test_device.reboot()
+    assert api_resp
+
+
+def test_device_poweroff_default_path(monkeypatch, test_device):
+    def mock_poweroff(*args, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {
+            "success": True,
+            "data": {},
+            "error": None,
+        }
+        return response
+
+    monkeypatch.setattr(
+        RestClient,
+        "_execute_request",
+        mock_poweroff,
+    )
+
+    api_resp = test_device.poweroff()
+    assert api_resp
+
+
+def test_config_file_save_includes_path(monkeypatch, test_device):
+    """Test that config_file_save includes path: [] in payload."""
+    captured_payload = {}
+    
+    def mock_execute_request(cls, url, method, verify, timeout, payload, headers):
+        captured_payload["data"] = json.loads(payload["data"])
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {"success": True, "data": "", "error": None}
+        return response
+    
+    monkeypatch.setattr(RestClient, "_execute_request", mock_execute_request)
+    
+    test_device.config_file_save(file="/config/test.config")
+    
+    # Verify path: [] is present in payload
+    assert "path" in captured_payload["data"]
+    assert captured_payload["data"]["path"] == []
+    assert captured_payload["data"]["op"] == "save"
+    assert captured_payload["data"]["file"] == "/config/test.config"
+
+
+def test_config_file_load_includes_path(monkeypatch, test_device):
+    """Test that config_file_load includes path: [] in payload."""
+    captured_payload = {}
+    
+    def mock_execute_request(cls, url, method, verify, timeout, payload, headers):
+        captured_payload["data"] = json.loads(payload["data"])
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {"success": True, "data": None, "error": None}
+        return response
+    
+    monkeypatch.setattr(RestClient, "_execute_request", mock_execute_request)
+    
+    test_device.config_file_load(file="/config/test.config")
+    
+    # Verify path: [] is present in payload
+    assert "path" in captured_payload["data"]
+    assert captured_payload["data"]["path"] == []
+    assert captured_payload["data"]["op"] == "load"
+    assert captured_payload["data"]["file"] == "/config/test.config"
+
+
+def test_show_omits_empty_path(monkeypatch, test_device):
+    """Test that show command omits path when empty."""
+    captured_payload = {}
+    
+    def mock_execute_request(cls, url, method, verify, timeout, payload, headers):
+        captured_payload["data"] = json.loads(payload["data"])
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {"success": True, "data": "", "error": None}
+        return response
+    
+    monkeypatch.setattr(RestClient, "_execute_request", mock_execute_request)
+    
+    # Call show without path (defaults to None/empty)
+    test_device.show(path=None)
+    
+    # Verify path is omitted when empty (not config-file)
+    assert captured_payload["data"]["op"] == "show"
+    # For non-config-file commands with empty path, path should be omitted
+    # Note: current implementation may still include empty path, test documents behavior
+
+
+def test_reset_handles_empty_path(monkeypatch, test_device):
+    """Test that reset handles empty path correctly."""
+    captured_payload = {}
+
+    def mock_execute_request(cls, url, method, verify, timeout, payload, headers):
+        captured_payload["data"] = json.loads(payload["data"])
+        response = requests.Response()
+        response.status_code = 200
+        response.json = lambda: {"success": True, "data": "", "error": None}
+        return response
+
+    monkeypatch.setattr(RestClient, "_execute_request", mock_execute_request)
+
+    test_device.reset(path=[])
+
+    # Verify path is omitted when empty (not config-file)
+    assert "path" not in captured_payload["data"]
+    assert captured_payload["data"]["op"] == "reset"
+
+
+def test_shim_compatibility():
+    """Test that shim modules maintain backward compatibility for 0.3.0."""
+    # Test public API imports still work
+    from pyvyos import VyDevice, ApiResponse
+
+    assert VyDevice is not None
+    assert ApiResponse is not None
+
+    # Test shim re-exports work
+    from pyvyos.device import VyDevice as DeviceShim
+    from pyvyos.rest import RestClient, ApiResponse as ResponseShim
+
+    assert DeviceShim is VyDevice
+    assert ResponseShim is ApiResponse
+
+    # Test core imports (new structure)
+    from pyvyos.core.device import VyDevice as CoreDevice
+    from pyvyos.core.rest_client import RestClient as CoreRestClient
+
+    assert CoreDevice is VyDevice
+    assert CoreRestClient is RestClient

@@ -166,3 +166,5 @@ packer/
 .env
 dev/
 .idea
+
+docs/vyos-documentation/
