@@ -1,0 +1,58 @@
+{
+  "command": "config-file",
+  "operation": "save",
+  "description": "Save the current configuration to a file.",
+  "endpoint": "/config-file",
+  "method": "POST",
+  "request": {
+    "payload": {
+      "data": {
+        "op": "save",
+        "path": [],
+        "file": "/config/backup.config"
+      },
+      "key": "your-api-key"
+    },
+    "example": {
+      "with_file": {
+        "op": "save",
+        "path": [],
+        "file": "/config/backup.config"
+      },
+      "default_location": {
+        "op": "save",
+        "path": []
+      }
+    }
+  },
+  "response": {
+    "success": {
+      "success": true,
+      "data": "",
+      "error": null
+    },
+    "error": {
+      "success": false,
+      "data": null,
+      "error": "Failed to save configuration"
+    }
+  },
+  "parameters": {
+    "file": {
+      "type": "string",
+      "required": false,
+      "description": "Path to the file where configuration will be saved. If not provided, uses default location.",
+      "example": "/config/backup.config"
+    },
+    "path": {
+      "type": "array",
+      "required": false,
+      "description": "Path parameter (required by API, typically empty array)",
+      "default": [],
+      "example": []
+    }
+  },
+  "python_usage": "device.config_file_save(file=\"/config/backup.config\")",
+  "notes": "The path parameter is required by the VyOS API even though it's typically empty for save operations."
+}
+
