@@ -39,7 +39,7 @@ device = VyDevice(
     apikey=os.environ["VYDEVICE_APIKEY"],
     port=int(os.environ.get("VYDEVICE_PORT", "443")),
     protocol=os.environ.get("VYDEVICE_PROTOCOL", "https"),
-    verify=os.environ.get("VYDEVICE_VERIFY_SSL", "true").lower() == "true",
+    verify=os.environ.get("VYDEVICE_VERIFY_SSL", "true").lower() in ("1", "true", "yes"),
 )
 
 response = device.show(path=["system", "image"])
@@ -80,11 +80,15 @@ All methods return an `ApiResponse` dataclass with four fields:
 ```python
 @dataclass
 class ApiResponse:
-    status: int          # HTTP status code
-    request: dict        # the request payload (API key removed)
-    result: dict | list  # parsed `data` field from the response
-    error: str | bool    # error message, or False on success
+    status: int                       # HTTP status code
+    request: dict                     # the request payload (API key redacted)
+    result: dict | list | str | None  # parsed `data` field from the response
+    error: str | bool                 # error message, or False on success
 ```
+
+`result` varies per endpoint: configuration retrieval returns a `dict` or
+`list`, operational commands like `show`/`generate` often return a `str`,
+and some endpoints return `None`.
 
 The recommended usage pattern is:
 
@@ -100,7 +104,7 @@ do_something_with(response.result)
 ```python
 device.configure_set(path=["interfaces", "ethernet", "eth0", "address", "192.0.2.1/24"])
 device.configure_delete(path=["interfaces", "dummy", "dum1"])
-device.configure_multiple_op(path=[
+device.configure_multiple_op(op_path=[
     {"op": "set",    "path": ["interfaces", "dummy", "dum2", "address", "203.0.113.1/24"]},
     {"op": "delete", "path": ["interfaces", "dummy", "dum1"]},
 ])
@@ -169,7 +173,7 @@ The deprecation timeline is:
 | `0.4.x` | Compatibility shims work without warnings.                        |
 | `0.5.x` | Internal solidity work; shims still silent.                       |
 | `0.6.x` | Compatibility shims emit a `DeprecationWarning`.                  |
-| `1.0.0` | Shims are removed or kept, depending on observed usage.           |
+| `1.0.0` | Final shim behaviour decided before release, based on observed usage and maintenance cost. |
 
 ## Examples
 
@@ -178,9 +182,7 @@ and a Vagrant-based lab setup under [`examples/vagrant/`](examples/vagrant/).
 
 ## Logging
 
-`pyvyos` uses the standard `logging` module under the `pyvyos` namespace and
-attaches a `NullHandler` so a default install does not print anything.
-
+`pyvyos` uses the standard `logging` module under the `pyvyos` namespace.
 To see request/response activity, configure the logger in your application:
 
 ```python
@@ -189,8 +191,12 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger("pyvyos").setLevel(logging.DEBUG)
 ```
 
-Request payloads are sanitised before logging — the `key` field is replaced
-with `***REDACTED***`.
+Log records contain structural fields only (`command`, `op`, `status`,
+`elapsed_ms`) and never include the request payload or the API key.
+
+The request payload returned via `ApiResponse.request` is sanitised — the
+`key` field is replaced with `***REDACTED***` before the response is
+handed back to the caller.
 
 ## VyOS compatibility
 

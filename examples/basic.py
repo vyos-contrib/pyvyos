@@ -69,7 +69,7 @@ def main() -> None:
     # Batch multiple configuration operations in a single request.
     pprint.pprint(
         device.configure_multiple_op(
-            path=[
+            op_path=[
                 {
                     "op": "set",
                     "path": [
