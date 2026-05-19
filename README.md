@@ -177,8 +177,14 @@ The deprecation timeline is:
 
 ## Examples
 
-A runnable end-to-end example lives in [`examples/basic.py`](examples/basic.py),
-and a Vagrant-based lab setup under [`examples/vagrant/`](examples/vagrant/).
+- [`examples/basic.py`](examples/basic.py) — read-only end-to-end usage
+  example. Safe to run against any reachable device.
+- [`examples/integration_smoke.py`](examples/integration_smoke.py) —
+  exercises mutating operations (`configure_set/delete`, `generate`,
+  `config_file_save/load`). Intended for a disposable lab; guarded by the
+  `PYVYOS_ALLOW_MUTATING_EXAMPLE=1` environment variable.
+- [`examples/vagrant/`](examples/vagrant/) — Vagrant-based VyOS lab for
+  local development and integration testing.
 
 ## Logging
 
