@@ -51,8 +51,11 @@ behavior**.
   - removed duplicated dependency blocks,
   - dropped the unused `validation` extra,
   - raised the pytest floor for Python 3.13.
-- PR validation workflow upgraded to `actions/checkout@v4`,
-  `actions/setup-python@v5`, and `astral-sh/setup-uv@v3`.
+- PR validation workflow upgraded to `actions/checkout@v6`,
+  `actions/setup-python@v6`, and `astral-sh/setup-uv@v8`. Publish
+  workflow upgraded to `actions/checkout@v6`, `actions/setup-python@v6`,
+  and `pypa/gh-action-pypi-publish@v1.14.0`. Pre-commit hooks bumped to
+  `pre-commit/pre-commit-hooks@v6.0.0`. All move off Node.js 20.
 - `.env.example` default flipped to `VYDEVICE_VERIFY_SSL=true`; commented
   with field descriptions.
 
