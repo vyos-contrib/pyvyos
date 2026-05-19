@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyvyos"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
     { name = "Roberto Berto", email = "463349+robertoberto@users.noreply.github.com" },
 ]
@@ -28,7 +28,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "pytest>=9.0.3",
     "requests>=2.34.2,<3.0",
 ]
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-05-19
+
+### Fixed
+- `pyproject.toml` declared `pytest>=9.0.3` as a **runtime** dependency.
+  `pip install pyvyos==0.4.0` therefore pulled pytest into every install.
+  Removed; pytest is and was always meant to be a `dev` extra only.
+  Runtime dependencies are now `requests>=2.32.0,<3.0` again — matching
+  what the `0.4.0` CHANGELOG claimed.
+
 ## [0.4.0] - 2025-11-20
 
 `0.4.0` is a cleanup and consolidation release. It is the first version
