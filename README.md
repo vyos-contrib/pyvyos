@@ -24,9 +24,14 @@ Requires **Python 3.11 or newer**. Tested on 3.11, 3.12, and 3.13.
 Enable the HTTPS API on the VyOS device and create an API key:
 
 ```text
+set service https api rest
 set service https api keys id my-key key 'your-secret-key'
 commit
 ```
+
+> The `set service https api rest` line is required. Without it the
+> HTTPS service only exposes `/info` and every other endpoint returns
+> `404`. See the VyOS docs for the [HTTP API service](https://docs.vyos.io/en/latest/configuration/service/https.html).
 
 Then, from Python:
 
@@ -206,13 +211,22 @@ handed back to the caller.
 
 ## VyOS compatibility
 
-Tested against:
+Tested live against:
 
-- VyOS 1.4 LTS (stable)
-- VyOS 1.5 rolling
+- VyOS rolling `2026.05.18-0045` (current rolling at release time)
 
-The library only depends on the HTTPS API surface, so versions that expose
-the same endpoints should work without changes.
+The library only depends on the HTTPS API surface, so older 1.4 / 1.5
+builds that expose the same endpoints should work without changes,
+but they are not exercised on every release. The live harness under
+[`tests/pve/`](tests/pve/) makes it easy to re-run the suite against
+any VyOS build you care about.
+
+Required device-side configuration for the live API:
+
+```text
+set service https api rest
+set service https api keys id <id> key '<secret>'
+```
 
 ## Development
 
@@ -230,6 +244,16 @@ Optional code-style hooks:
 pip install pre-commit
 pre-commit install
 ```
+
+### Live VyOS testing
+
+The regular test suite is mock-based and does not need a VyOS device.
+
+For maintainers, this repository ships an opt-in harness under
+[`tests/pve/`](tests/pve/) that creates a disposable VyOS VM on a
+local Proxmox host and runs `tests/e2e` against the real HTTPS API.
+It is not part of the default GitHub Actions workflow. See the
+harness README for setup.
 
 ## Contributing
 

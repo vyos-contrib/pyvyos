@@ -28,6 +28,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "pytest>=9.0.3",
     "requests>=2.32.0,<3.0",
 ]
 
@@ -56,11 +57,11 @@ filterwarnings = [
     "ignore::DeprecationWarning:ast",
 ]
 env = [
-    "VYDEVICE_APIKEY='api_key'",
-    "VYDEVICE_HOSTNAME=192.168.56.100",
-    "VYDEVICE_PORT=443",
-    "VYDEVICE_PROTOCOL=https",
-    "VYDEVICE_VERIFY_SSL=False",
+    "D:VYDEVICE_APIKEY=api_key",
+    "D:VYDEVICE_HOSTNAME=192.168.56.100",
+    "D:VYDEVICE_PORT=443",
+    "D:VYDEVICE_PROTOCOL=https",
+    "D:VYDEVICE_VERIFY_SSL=False",
 ]
 
 [tool.coverage.run]

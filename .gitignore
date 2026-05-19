@@ -161,6 +161,7 @@ cython_debug/
 
 
 examples/vagrant/.vagrant
+tests/pve/.env
 packer/
 *.code-workspace
 .env

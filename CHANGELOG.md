@@ -24,6 +24,10 @@ behavior**.
 - GitHub Actions ecosystem entry in `.github/dependabot.yml` so workflow
   versions stay current.
 - Documented public API stability and deprecation timeline in `README.md`.
+- Opt-in live end-to-end harness under `tests/pve/` and `tests/e2e/`.
+  Maintainers can ssh to a Proxmox host, build a VyOS template once,
+  clone a disposable VM, and run a small live test suite against the
+  real HTTPS API. Auto-skipped unless `PYVYOS_E2E=1`. Not part of CI.
 
 ### Changed
 - `requires-python` lowered to `>=3.11` (was `>=3.13`). The codebase
@@ -86,6 +90,11 @@ behavior**.
 
 ### Fixed
 - `LICENSE` copyright now reads `2023 GravScale, Roberto Bertó`.
+- `pyproject.toml` `[tool.pytest.ini_options].env` entries now use the
+  `D:` (default) prefix so that operators running the live e2e harness
+  can override `VYDEVICE_HOSTNAME` and friends from the shell. The
+  previous values silently overwrote shell exports, making it look like
+  e2e tests pointed at a stale `192.168.56.100`.
 
 ### Compatibility
 - Public imports are unchanged:

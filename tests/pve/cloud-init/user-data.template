@@ -1,0 +1,14 @@
+#cloud-config
+# VyOS NoCloud user-data baked into the template.
+#
+# Placeholders replaced at render time by ensure-template.sh:
+#   __APIKEY__   pyvyos HTTPS API key
+#   __HOSTNAME__ initial system hostname
+
+vyos_config_commands:
+  - set system host-name '__HOSTNAME__'
+  - set service https api rest
+  - set service https api keys id pyvyos key '__APIKEY__'
+  - set service https listen-address '0.0.0.0'
+  - set service https port '443'
+  - set service ssh port '22'
