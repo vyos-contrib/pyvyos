@@ -171,6 +171,11 @@ The deprecation timeline is:
 | `0.6.x` | Compatibility shims emit a `DeprecationWarning`.                  |
 | `1.0.0` | Shims are removed or kept, depending on observed usage.           |
 
+## Examples
+
+A runnable end-to-end example lives in [`examples/basic.py`](examples/basic.py),
+and a Vagrant-based lab setup under [`examples/vagrant/`](examples/vagrant/).
+
 ## Logging
 
 `pyvyos` uses the standard `logging` module under the `pyvyos` namespace and

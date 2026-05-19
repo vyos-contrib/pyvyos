@@ -16,6 +16,8 @@ This release **does not change HTTP payload generation or request/response
 behavior**.
 
 ### Added
+- `examples/basic.py` — runnable end-to-end usage example using the
+  supported public API (`from pyvyos import VyDevice`).
 - `pyvyos/py.typed` PEP 561 marker, advertising the package as typed.
 - `.pre-commit-config.yaml` with neutral hooks (trailing whitespace,
   end-of-file fixer, YAML/TOML syntax check, large-file guard).
@@ -24,6 +26,7 @@ behavior**.
 - Documented public API stability and deprecation timeline in `README.md`.
 
 ### Changed
+- `vagrant/` lab setup moved to `examples/vagrant/`.
 - `pyvyos.core.*` is now the internal implementation layer; the supported
   public API is `from pyvyos import VyDevice, ApiResponse`. The legacy
   `pyvyos.device` and `pyvyos.rest` shims continue to work without
@@ -41,6 +44,10 @@ behavior**.
   with field descriptions.
 
 ### Removed
+- Root-level stragglers: `CONTRIB.md` (superseded by `CONTRIBUTING.md`),
+  `requirements.txt` (duplicated `[project].dependencies`), `test_quick.py`
+  (ad-hoc smoke script, covered by `tests/test_shims.py`), and the
+  committed `uv.lock` (not appropriate for a library; now gitignored).
 - `pyvyos.specs` package (experimental Pydantic models). It was never
   imported by the runtime and had 0% test coverage. Pydantic is no longer
   an optional dependency.
