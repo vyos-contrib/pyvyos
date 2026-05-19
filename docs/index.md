@@ -37,7 +37,7 @@ device = VyDevice(
     apikey="your-api-key",
     port=443,
     protocol="https",
-    verify=False
+    verify=True
 )
 
 response = device.show(path=["system", "image"])
@@ -48,8 +48,6 @@ print(response.result)
 
 - [GitHub Repository](https://github.com/vyos-contrib/pyvyos)
 - [PyPI Package](https://pypi.org/project/pyvyos/)
-- [Read the Docs](https://pyvyos.readthedocs.io/)
-
 ## License
 
 MIT License - See LICENSE file for details
