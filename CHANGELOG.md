@@ -51,11 +51,14 @@ behavior**.
   - removed duplicated dependency blocks,
   - dropped the unused `validation` extra,
   - raised the pytest floor for Python 3.13.
-- PR validation workflow upgraded to `actions/checkout@v6`,
-  `actions/setup-python@v6`, and `astral-sh/setup-uv@v8.1.0`. Publish
-  workflow upgraded to `actions/checkout@v6`, `actions/setup-python@v6`,
-  and `pypa/gh-action-pypi-publish@v1.14.0`. Pre-commit hooks bumped to
-  `pre-commit/pre-commit-hooks@v6.0.0`. All move off Node.js 20.
+- GitHub Actions bumped off Node.js 20 and pinned by full commit SHA
+  (per [OpenSSF Scorecard guidance][1]) with a `# vX.Y.Z` comment so
+  Dependabot can keep them current:
+  `actions/checkout@v6.0.2`, `actions/setup-python@v6.2.0`,
+  `astral-sh/setup-uv@v8.1.0`, `pypa/gh-action-pypi-publish@v1.14.0`.
+  Pre-commit hooks bumped to `pre-commit/pre-commit-hooks@v6.0.0`.
+
+[1]: https://github.com/ossf/scorecard/blob/main/docs/checks.md#pinned-dependencies
 - `.env.example` default flipped to `VYDEVICE_VERIFY_SSL=true`; commented
   with field descriptions.
 
