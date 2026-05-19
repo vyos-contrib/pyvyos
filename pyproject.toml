@@ -34,7 +34,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "python-dotenv>=1.0.1,<2.0",
+    "python-dotenv>=1.2.2,<2.0",
     "pytest>=8.0,<10.0",
     "pytest-cov>=7.1.0,<8.0",
     "pytest-env>=0.6.2,<1.3",
