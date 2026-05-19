@@ -160,11 +160,13 @@ cython_debug/
 #.idea/
 
 
-vagrant/.vagrant
+examples/vagrant/.vagrant
+tests/pve/.env
 packer/
 *.code-workspace
 .env
 dev/
 .idea
+uv.lock
 
 docs/vyos-documentation/

@@ -5,50 +5,128 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2025-01-XX
+## [0.4.0] - 2025-11-20
+
+`0.4.0` is a cleanup and consolidation release. It is the first version
+since `0.2.2` published to PyPI. The git tag `v0.4.0` previously pointed at
+the intermediate refactor commit `6b4e901`; it has been moved to the
+release commit that includes the cleanup described below.
+
+This release **does not change HTTP payload generation or request/response
+behavior**.
 
 ### Added
-- Exception hierarchy (`SDKError`, `HttpError`, `ApiError`, `ValidationError`) in `pyvyos.exceptions`
-- Utility functions in `pyvyos.utils`:
-  - `json.redact_key()` and `json.safe_dumps()` for secure JSON handling
-  - `ids.request_id()` for request tracing
-  - `paths.build_path()` for building configuration paths
-- Structured logging in `RestClient` with request ID tracking and elapsed time
-- Optional Pydantic validation models in `pyvyos.specs.commands.*` for request/response validation
-- Development documentation:
-  - Architecture guide (`docs/development/architecture.md`)
-  - Refactor roadmap (`docs/development/refactor-roadmap.md`)
-  - Quality and utils guidelines (`docs/development/quality-and-utils.md`)
-- Comprehensive test suite for backward compatibility (19 tests for shims, 16 tests for utils, 6 tests for exceptions)
-- `[tool.uv] package = true` in `pyproject.toml` for editable installation via `uv sync`
+- `examples/basic.py` — runnable end-to-end usage example using the
+  supported public API (`from pyvyos import VyDevice`).
+- `pyvyos/py.typed` PEP 561 marker, advertising the package as typed.
+- `.pre-commit-config.yaml` with neutral hooks (trailing whitespace,
+  end-of-file fixer, YAML/TOML syntax check, large-file guard).
+- GitHub Actions ecosystem entry in `.github/dependabot.yml` so workflow
+  versions stay current.
+- Documented public API stability and deprecation timeline in `README.md`.
+- Opt-in live end-to-end harness under `tests/pve/` and `tests/e2e/`.
+  Maintainers can ssh to a Proxmox host, build a VyOS template once,
+  clone a disposable VM, and run a small live test suite against the
+  real HTTPS API. Auto-skipped unless `PYVYOS_E2E=1`. Not part of CI.
 
 ### Changed
-- Moved JSON API specifications from `pyvyos/vyos-api/` to `docs/development/vyos_api/` (reference only)
-- Updated `pyproject.toml` to include optional `validation` dependency group for Pydantic
-- Enhanced `RestClient` logging with structured fields (request_id, command, op, status, elapsed_ms)
-- Refactored internal structure to `pyvyos.core.*` while maintaining full backward compatibility via shims
+- `requires-python` lowered to `>=3.11` (was `>=3.13`). The codebase
+  does not use any 3.13-only syntax, and the lower floor makes the
+  package reachable for the typical VyOS automation environment. CI now
+  validates against 3.11, 3.12, and 3.13.
+- Runtime dependencies trimmed to `requests>=2.32.0,<3.0` only.
+  - `python-dotenv` was never imported by the library itself — it is now
+    a `dev` extra used by the bundled examples.
+  - `urllib3` was never used directly by `pyvyos` — it stays available
+    transitively through `requests`.
+- `vagrant/` lab setup moved to `examples/vagrant/`.
+- `pyvyos.core.*` is now the internal implementation layer; the supported
+  public API is `from pyvyos import VyDevice, ApiResponse`. The legacy
+  `pyvyos.device` and `pyvyos.rest` shims continue to work without
+  warnings.
+- `RestClient` logging is now plain and structured: command, op, status,
+  elapsed milliseconds. No request-ID field.
+- `pyproject.toml`:
+  - declared the wheel package explicitly,
+  - removed duplicated dependency blocks,
+  - dropped the unused `validation` extra,
+  - raised the pytest floor for Python 3.13.
+- GitHub Actions bumped off Node.js 20 and pinned by full commit SHA
+  (per [OpenSSF Scorecard guidance][1]) with a `# vX.Y.Z` comment so
+  Dependabot can keep them current:
+  `actions/checkout@v6.0.2`, `actions/setup-python@v6.2.0`,
+  `astral-sh/setup-uv@v8.1.0`, `pypa/gh-action-pypi-publish@v1.14.0`.
+  Pre-commit hooks bumped to `pre-commit/pre-commit-hooks@v6.0.0`.
+
+[1]: https://github.com/ossf/scorecard/blob/main/docs/checks.md#pinned-dependencies
+- `.env.example` default flipped to `VYDEVICE_VERIFY_SSL=true`; commented
+  with field descriptions.
+
+### Removed
+- Root-level stragglers: `CONTRIB.md` (superseded by `CONTRIBUTING.md`),
+  `requirements.txt` (duplicated `[project].dependencies`), `test_quick.py`
+  (ad-hoc smoke script, covered by `tests/test_shims.py`), and the
+  committed `uv.lock` (not appropriate for a library; now gitignored).
+- `pyvyos.specs` package (experimental Pydantic models). It was never
+  imported by the runtime and had 0% test coverage. Pydantic is no longer
+  an optional dependency.
+- `pyvyos.exceptions` module (`SDKError`, `HttpError`, `ApiError`,
+  `ValidationError`). The hierarchy was defined but never raised anywhere
+  in the codebase. Error reporting continues through `ApiResponse.error`.
+- `pyvyos.utils.ids.request_id` helper. The generated UUIDs were attached
+  to log records but never propagated to callers — half-implemented
+  tracing is worse than none. It will be reintroduced if and when real
+  observability hooks land.
+- `pyvyos.utils` no longer re-exports `request_id`.
+- Obsolete tooling: `Makefile` (hard-coded `env/bin/python`),
+  `run_tests.sh`, `run_tests.py`.
+- Dead workflow `.github/workflows/python-app.yml` (Python 3.12, only ran
+  flake8 with pytest commented out, referenced a non-existent
+  `requirements.txt`).
+- `sphinx/` source tree and `.readthedocs.yaml`: the RTD configuration
+  pointed to `docs/source/conf.py` while the Sphinx tree lived under
+  `sphinx/source/`, so the build never worked and no documentation was
+  ever published. The hand-written Markdown docs under `docs/` are
+  retained.
+- Stale development notes under `docs/development/` (architecture,
+  refactor roadmap, quality-and-utils) — they described the pre-cleanup
+  proposal that included specs/exceptions/request_id.
+- Tests for the removed modules (`tests/test_exceptions.py`,
+  `tests/utils/test_ids.py`).
 
 ### Fixed
-- **Fixed #25**: `config_file_save()` and `config_file_load()` now correctly include `path: []` in payload as required by VyOS API
-- Path parameter handling for `config-file` commands (always includes `path: []`)
-- Secret redaction in logs and sanitized payloads
+- `LICENSE` copyright now reads `2023 GravScale, Roberto Bertó`.
+- `pyproject.toml` `[tool.pytest.ini_options].env` entries now use the
+  `D:` (default) prefix so that operators running the live e2e harness
+  can override `VYDEVICE_HOSTNAME` and friends from the shell. The
+  previous values silently overwrote shell exports, making it look like
+  e2e tests pointed at a stale `192.168.56.100`.
 
-### Security
-- API keys are automatically redacted in logs and response payloads
+### Compatibility
+- Public imports are unchanged:
+  - `from pyvyos import VyDevice, ApiResponse`
+  - `from pyvyos.device import VyDevice`
+  - `from pyvyos.rest import RestClient, ApiResponse`
+- HTTP payload generation is unchanged.
+- Request and response behaviour is unchanged.
+- No compatibility shim has been deprecated in this release.
 
 ### Notes
-- This release maintains 100% backward compatibility with version 0.3.0
-- All existing imports and code will continue to work without changes
-- New internal structure (`pyvyos.core.*`) is available but not required for existing code
+- This release prepares the project for the upcoming `0.5.x` work:
+  contract tests for public payloads, fixes to the public method edges
+  (`image_add`/`image_delete`, `timeout`, mutable defaults), stdlib-based
+  validators, and a tidier internal core.
 
 ## [0.3.0] - 2024-XX-XX
 
+Tagged in git but never published to PyPI. Released to PyPI as part of
+`0.4.0`.
+
 ### Added
-- Initial release
-- Core functionality for VyOS REST API interaction
-- Support for configure, retrieve, show, generate, reset, config-file, reboot, poweroff, and image operations
+- Initial public release of the SDK structure.
+- Core functionality for VyOS HTTPS API: configure, retrieve, show,
+  generate, reset, config-file, reboot, poweroff, and image operations.
 
 [Unreleased]: https://github.com/vyos-contrib/pyvyos/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/vyos-contrib/pyvyos/compare/v0.3.0...v0.4.0
+[0.4.0]: https://github.com/vyos-contrib/pyvyos/compare/v0.2.2...v0.4.0
 [0.3.0]: https://github.com/vyos-contrib/pyvyos/releases/tag/v0.3.0
-

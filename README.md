@@ -1,149 +1,266 @@
-# pyvyos Documentation
+# pyvyos
 
-pyvyos is a Python library for interacting with VyOS devices via their API. This documentation provides a guide on how to use pyvyos to manage your VyOS devices programmatically.
+[![PyPI version](https://img.shields.io/pypi/v/pyvyos.svg)](https://pypi.org/project/pyvyos/)
+[![Python versions](https://img.shields.io/pypi/pyversions/pyvyos.svg)](https://pypi.org/project/pyvyos/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PR Validation](https://github.com/vyos-contrib/pyvyos/actions/workflows/python-pr-validation.yml/badge.svg)](https://github.com/vyos-contrib/pyvyos/actions/workflows/python-pr-validation.yml)
 
-You can find the complete pyvyos documentation on [Read the Docs](https://pyvyos.readthedocs.io/en/latest/).
+Python SDK for the [VyOS](https://vyos.io/) HTTPS API.
+
+`pyvyos` is a small, focused library that wraps the VyOS HTTPS API in an
+idiomatic Python interface. It is intended for automation scripts, internal
+tooling, and integrations with configuration management systems.
 
 ## Installation
-
-You can install pyvyos using pip https://pypi.org/project/pyvyos/:
 
 ```bash
 pip install pyvyos
 ```
 
-## Getting Started
+Requires **Python 3.11 or newer**. Tested on 3.11, 3.12, and 3.13.
 
-### Importing and Disabling Warnings for verify=False
-Before using pyvyos, it's a good practice to disable urllib3 warnings and import the required modules, IF you use verify=False:
+## Quick start
 
+Enable the HTTPS API on the VyOS device and create an API key:
+
+```text
+set service https api rest
+set service https api keys id my-key key 'your-secret-key'
+commit
 ```
+
+> The `set service https api rest` line is required. Without it the
+> HTTPS service only exposes `/info` and every other endpoint returns
+> `404`. See the VyOS docs for the [HTTP API service](https://docs.vyos.io/en/latest/configuration/service/https.html).
+
+Then, from Python:
+
+```python
+import os
+from pyvyos import VyDevice
+
+device = VyDevice(
+    hostname=os.environ["VYDEVICE_HOSTNAME"],
+    apikey=os.environ["VYDEVICE_APIKEY"],
+    port=int(os.environ.get("VYDEVICE_PORT", "443")),
+    protocol=os.environ.get("VYDEVICE_PROTOCOL", "https"),
+    verify=os.environ.get("VYDEVICE_VERIFY_SSL", "true").lower() in ("1", "true", "yes"),
+)
+
+response = device.show(path=["system", "image"])
+if response.error:
+    print(f"Error {response.status}: {response.error}")
+else:
+    print(response.result)
+```
+
+If you use self-signed certificates, set `verify=False` **only in lab
+environments** and silence the urllib3 warning explicitly:
+
+```python
 import urllib3
-urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ```
 
-### Using API Response Class
-pyvyos uses a custom ApiResponse data class to handle API responses:
+## Environment variables
 
-```
+A `.env.example` is shipped with the project. The recognised variables are:
+
+| Variable               | Default | Purpose                                            |
+| ---------------------- | ------- | -------------------------------------------------- |
+| `VYDEVICE_HOSTNAME`    | —       | Hostname or IP address of the VyOS device.         |
+| `VYDEVICE_APIKEY`      | —       | API key configured on the device.                  |
+| `VYDEVICE_PORT`        | `443`   | HTTPS port of the VyOS API.                        |
+| `VYDEVICE_PROTOCOL`    | `https` | `https` (recommended) or `http`.                   |
+| `VYDEVICE_VERIFY_SSL`  | `true`  | Verify the TLS certificate of the device.          |
+
+`pyvyos` does not read these variables on its own — your application is
+responsible for loading them (for example with `python-dotenv`) and passing
+the values to `VyDevice`.
+
+## API overview
+
+All methods return an `ApiResponse` dataclass with four fields:
+
+```python
 @dataclass
 class ApiResponse:
-    status: int
-    request: dict
-    result: dict
-    error: str
+    status: int                       # HTTP status code
+    request: dict                     # the request payload (API key redacted)
+    result: dict | list | str | None  # parsed `data` field from the response
+    error: str | bool                 # error message, or False on success
 ```
 
-### Initializing a VyDevice Object
+`result` varies per endpoint: configuration retrieval returns a `dict` or
+`list`, operational commands like `show`/`generate` often return a `str`,
+and some endpoints return `None`.
 
+The recommended usage pattern is:
 
-#### Configuring Your Environment for VyDevice
-1. Rename the file .env.example to .env.
-1. Open the .env file in a text editor.
-1. Replace the placeholder values with your VyOS device credentials:
-  - **VYDEVICE_HOSTNAME**: Your device's hostname or IP address.
-  - **VYDEVICE_APIKEY**: Your API key for authentication.
-  - **VYDEVICE_PORT**: The port number for the API. Default 443
-  - **VYDEVICE_PROTOCOL**: The protocol (e.g., http or https). Default https
-  - **VYDEVICE_VERIFY_SSL**: Set to True or False for SSL verification. 
-
-
-```
-# Retrieve VyOS device connection details from environment variables and configure VyDevice
-from dotenv import load_dotenv
-load_dotenv()
-
-hostname = os.getenv('VYDEVICE_HOSTNAME')
-apikey = os.getenv('VYDEVICE_APIKEY')
-port = os.getenv('VYDEVICE_PORT')
-protocol = os.getenv('VYDEVICE_PROTOCOL')
-verify_ssl = os.getenv('VYDEVICE_VERIFY_SSL')
-
-# Convert the verify_ssl value to a boolean
-verify = verify_ssl.lower() == "true" if verify_ssl else True 
-
-device = VyDevice(hostname=hostname, apikey=apikey, port=port, protocol=protocol, verify=verify)
+```python
+response = device.retrieve_show_config(path=["interfaces"])
+if response.error:
+    raise RuntimeError(response.error)
+do_something_with(response.result)
 ```
 
-## Using pyvyos
+### Configuration
 
-### configure, then set
-The configure_set method sets a VyOS configuration:
-
-```
-# Set a VyOS configuration
-response = device.configure_set(path=["interfaces", "ethernet", "eth0", "address", "192.168.1.1/24"])
-
-# Check for errors and print the result
-if not response.error:
-    print(response.result)
-```
-### configure, then show a single OBJECT value
-```
-# Retrieve VyOS return values for a specific interface
-response = device.retrieve_return_values(path=["interfaces", "dummy", "dum1", "address"])
-print(response.result)
+```python
+device.configure_set(path=["interfaces", "ethernet", "eth0", "address", "192.0.2.1/24"])
+device.configure_delete(path=["interfaces", "dummy", "dum1"])
+device.configure_multiple_op(op_path=[
+    {"op": "set",    "path": ["interfaces", "dummy", "dum2", "address", "203.0.113.1/24"]},
+    {"op": "delete", "path": ["interfaces", "dummy", "dum1"]},
+])
 ```
 
-### configure, then show OBJECT
-The retrieve_show_config method retrieves the VyOS configuration:
+### Retrieval
 
-```
-# Retrieve the VyOS configuration
-response = device.retrieve_show_config(path=[])
-
-# Check for errors and print the result
-if not response.error:
-    print(response.result)
+```python
+device.retrieve_show_config(path=["system"])
+device.retrieve_return_values(path=["interfaces", "dummy", "dum1", "address"])
 ```
 
-### configure, then delete OBJECT
-```
-# Delete a VyOS interface configuration
-response = device.configure_delete(path=["interfaces", "dummy", "dum1"])
+### Operational
+
+```python
+device.show(path=["system", "image"])
+device.generate(path=["ssh", "client-key", "/tmp/key"])
+device.reset(path=["conntrack-sync", "internal-cache"])
 ```
 
-### configure, then save
-```
-# Save VyOS configuration without specifying a file (default location)
-response = device.config_file_save()
+### Configuration files
+
+```python
+device.config_file_save()                                # default location
+device.config_file_save(file="/config/backup.config")
+device.config_file_load(file="/config/backup.config")
 ```
 
-### configure, then save FILE
-```
-# Save VyOS configuration to a specific file
-response = device.config_file_save(file="/config/test300.config")
+### System control
+
+```python
+device.reboot()      # equivalent to device.reboot(path=["now"])
+device.poweroff()    # equivalent to device.poweroff(path=["now"])
 ```
 
-## show OBJECT
-```
-# Show VyOS system image information
-response = device.show(path=["system", "image"])
-print(response.result)
+### Image management
+
+```python
+device.image_add(url="https://downloads.vyos.io/.../vyos-1.4-image.iso")
+device.image_delete(name="1.4-rolling-...")
 ```
 
-### generate OBJECT
-```
-# Generate an SSH key with a random string in the name
-randstring = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20))
-keyrand =  f'/tmp/key_{randstring}'
-response = device.generate(path=["ssh", "client-key", keyrand])
+## Public API stability
+
+The supported public API of pyvyos is:
+
+```python
+from pyvyos import VyDevice, ApiResponse
 ```
 
-### reset OBJECT
-The reset method allows you to run a reset command:
+These compatibility imports continue to work without warnings and will be
+kept while the migration cost remains trivial:
 
-```
-# Execute the reset command
-response = device.reset(path=["conntrack-sync", "internal-cache"])
-
-# Check for errors and print the result
-if not response.error:
-    print(response.result)
+```python
+from pyvyos.device import VyDevice
+from pyvyos.rest import RestClient, ApiResponse
 ```
 
-### configure, then load FILE
+Anything under `pyvyos.core.*` is internal implementation detail and may
+change between minor releases.
+
+The deprecation timeline is:
+
+| Release | Status                                                            |
+| ------- | ----------------------------------------------------------------- |
+| `0.4.x` | Compatibility shims work without warnings.                        |
+| `0.5.x` | Internal solidity work; shims still silent.                       |
+| `0.6.x` | Compatibility shims emit a `DeprecationWarning`.                  |
+| `1.0.0` | Final shim behaviour decided before release, based on observed usage and maintenance cost. |
+
+## Examples
+
+- [`examples/basic.py`](examples/basic.py) — read-only end-to-end usage
+  example. Safe to run against any reachable device.
+- [`examples/integration_smoke.py`](examples/integration_smoke.py) —
+  exercises mutating operations (`configure_set/delete`, `generate`,
+  `config_file_save/load`). Intended for a disposable lab; guarded by the
+  `PYVYOS_ALLOW_MUTATING_EXAMPLE=1` environment variable.
+- [`examples/vagrant/`](examples/vagrant/) — Vagrant-based VyOS lab for
+  local development and integration testing.
+
+## Logging
+
+`pyvyos` uses the standard `logging` module under the `pyvyos` namespace.
+To see request/response activity, configure the logger in your application:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("pyvyos").setLevel(logging.DEBUG)
 ```
-# Load VyOS configuration from a specific file
-response = device.config_file_load(file="/config/test300.config")
+
+Log records contain structural fields only (`command`, `op`, `status`,
+`elapsed_ms`) and never include the request payload or the API key.
+
+The request payload returned via `ApiResponse.request` is sanitised — the
+`key` field is replaced with `***REDACTED***` before the response is
+handed back to the caller.
+
+## VyOS compatibility
+
+Tested live against:
+
+- VyOS rolling `2026.05.18-0045` (current rolling at release time)
+
+The library only depends on the HTTPS API surface, so older 1.4 / 1.5
+builds that expose the same endpoints should work without changes,
+but they are not exercised on every release. The live harness under
+[`tests/pve/`](tests/pve/) makes it easy to re-run the suite against
+any VyOS build you care about.
+
+Required device-side configuration for the live API:
+
+```text
+set service https api rest
+set service https api keys id <id> key '<secret>'
 ```
+
+## Development
+
+The project uses [uv](https://docs.astral.sh/uv/) for environment
+management:
+
+```bash
+uv sync --extra dev
+uv run pytest
+```
+
+Optional code-style hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### Live VyOS testing
+
+The regular test suite is mock-based and does not need a VyOS device.
+
+For maintainers, this repository ships an opt-in harness under
+[`tests/pve/`](tests/pve/) that creates a disposable VyOS VM on a
+local Proxmox host and runs `tests/e2e` against the real HTTPS API.
+It is not part of the default GitHub Actions workflow. See the
+harness README for setup.
+
+## Contributing
+
+Bug reports and pull requests are welcome. Please open an issue first to
+discuss anything beyond a small fix, and keep changes focused — payload and
+public-API changes go through a separate review cycle.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

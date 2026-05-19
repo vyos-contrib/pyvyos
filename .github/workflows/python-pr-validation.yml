@@ -1,29 +1,36 @@
-name: Python Pull Request Validation Workflow
+name: Pull Request Validation
 
 on:
-    pull_request:
-        branches: [ "main", "master" ]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
 
 jobs:
-  Validation:
+  validate:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.13"
-          architecture: "x64"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
 
       - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install uv
-          uv venv
-          uv pip install -e .[dev]
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
 
-      - name: Python Run Tests
-        run: |
-          uv run pytest -v
+      - name: Run tests
+        run: uv run --python ${{ matrix.python-version }} pytest -v

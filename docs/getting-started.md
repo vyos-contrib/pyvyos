@@ -21,7 +21,7 @@ VYDEVICE_HOSTNAME=192.168.1.1
 VYDEVICE_APIKEY=your-api-key-here
 VYDEVICE_PORT=443
 VYDEVICE_PROTOCOL=https
-VYDEVICE_VERIFY_SSL=False
+VYDEVICE_VERIFY_SSL=true
 ```
 
 ## Step 3: Create Your First Script
@@ -54,7 +54,7 @@ If using `verify=False`, disable urllib3 warnings:
 
 ```python
 import urllib3
-urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ```
 
 ## Understanding API Responses
