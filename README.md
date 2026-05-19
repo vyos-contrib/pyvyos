@@ -255,6 +255,13 @@ local Proxmox host and runs `tests/e2e` against the real HTTPS API.
 It is not part of the default GitHub Actions workflow. See the
 harness README for setup.
 
+## Related projects
+
+- [`vyos-contrib/packer-vyos`](https://github.com/vyos-contrib/packer-vyos)
+  — Packer builder that produces ready-to-deploy VyOS images for QEMU,
+  Proxmox, AWS, and other targets. Complementary to `pyvyos`: build the
+  image with `packer-vyos`, then drive it from Python with `pyvyos`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome. Please open an issue first to

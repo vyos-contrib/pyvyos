@@ -75,6 +75,17 @@ tests/pve/ensure-template.sh  # phase 2: cloud-init applies API key,
 The script is a state machine on the VMID, so re-running it from any
 point is safe.
 
+### Alternative: prebuilt images with packer-vyos
+
+If you would rather skip the interactive install entirely, you can
+build a ready-to-clone VyOS image with
+[`vyos-contrib/packer-vyos`](https://github.com/vyos-contrib/packer-vyos)
+and import it on the PVE host instead of running phase 1 here. The
+harness scripts still work — you just point `VYOS_TEMPLATE_VMID` at
+the imported image. This harness keeps the install path because it
+has no extra dependencies; `packer-vyos` is a more capable option if
+you want repeatable image builds.
+
 ## Per-run workflow
 
 ```bash
