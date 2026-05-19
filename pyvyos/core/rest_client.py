@@ -232,18 +232,10 @@ class RestClient(ABC):
         # Initialize mutable defaults safely
         path = path or []
 
-        # Generate request ID for tracing
-        try:
-            from ..utils.ids import request_id
-            req_id = request_id()
-        except ImportError:
-            req_id = None
-
         # Log request start (DEBUG level)
         logger.debug(
             "Request start",
             extra={
-                "request_id": req_id,
                 "command": command,
                 "op": op,
                 "has_path": bool(path),
@@ -261,7 +253,6 @@ class RestClient(ABC):
         logger.info(
             "Request completed",
             extra={
-                "request_id": req_id,
                 "command": command,
                 "op": op,
                 "status": status,
