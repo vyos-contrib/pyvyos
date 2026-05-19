@@ -17,7 +17,7 @@ tooling, and integrations with configuration management systems.
 pip install pyvyos
 ```
 
-Requires **Python 3.13 or newer**.
+Requires **Python 3.11 or newer**. Tested on 3.11, 3.12, and 3.13.
 
 ## Quick start
 

@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Python SDK for interacting with the VyOS HTTPS API"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 keywords = ["vyos", "networking", "sdk", "api", "router", "firewall"]
 classifiers = [
@@ -20,6 +20,8 @@ classifiers = [
     "Topic :: System :: Networking",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -27,12 +29,11 @@ classifiers = [
 ]
 dependencies = [
     "requests>=2.32.0,<3.0",
-    "python-dotenv>=1.0.1,<2.0",
-    "urllib3>=2.5.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "python-dotenv>=1.0.1,<2.0",
     "pytest>=8.0,<10.0",
     "pytest-cov>=5.0,<7.0",
     "pytest-env>=0.6.2,<1.3",

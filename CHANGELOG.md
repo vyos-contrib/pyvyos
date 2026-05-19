@@ -26,6 +26,15 @@ behavior**.
 - Documented public API stability and deprecation timeline in `README.md`.
 
 ### Changed
+- `requires-python` lowered to `>=3.11` (was `>=3.13`). The codebase
+  does not use any 3.13-only syntax, and the lower floor makes the
+  package reachable for the typical VyOS automation environment. CI now
+  validates against 3.11, 3.12, and 3.13.
+- Runtime dependencies trimmed to `requests>=2.32.0,<3.0` only.
+  - `python-dotenv` was never imported by the library itself — it is now
+    a `dev` extra used by the bundled examples.
+  - `urllib3` was never used directly by `pyvyos` — it stays available
+    transitively through `requests`.
 - `vagrant/` lab setup moved to `examples/vagrant/`.
 - `pyvyos.core.*` is now the internal implementation layer; the supported
   public API is `from pyvyos import VyDevice, ApiResponse`. The legacy
