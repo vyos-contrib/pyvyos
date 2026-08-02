@@ -355,11 +355,15 @@ class RestClient(ABC):
             error = f"Invalid response format: {str(exc)}"
             status = resp.status_code if resp is not None and isinstance(resp, Response) else 500
 
-
         except HTTPError as exc:
             response = exc.response
             status = response.status_code if response is not None and isinstance(response, Response) else 500
-            error = f"HTTP Error {status}: {response.text[:200] if response else 'Unknown error'}"
+            try:
+                resp_json = response.json() if response else {}
+                api_error = resp_json.get("error", "")
+                error = f"HTTP Error {status}: {api_error or response.text[:200]}"
+            except (JSONDecodeError, AttributeError):
+                error = f"HTTP Error {status}: Unknown error"
 
         except ValueError as exc:
             error = f"Validation Error: {str(exc)}"
